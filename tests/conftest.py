@@ -3,6 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from finapp.db import Base
 from finapp.deps import AccountContext
+from finapp.models import Account
 
 
 @pytest.fixture(scope="function")
@@ -29,5 +30,14 @@ def db(db_engine):
 
 
 @pytest.fixture(scope="function")
-def ctx(db):
-    return AccountContext(account_id=1, db=db)
+def account(db):
+    """Create a test account."""
+    account = Account(id=1, display_name="Test User")
+    db.add(account)
+    db.commit()
+    return account
+
+
+@pytest.fixture(scope="function")
+def ctx(db, account):
+    return AccountContext(account_id=account.id, db=db)
