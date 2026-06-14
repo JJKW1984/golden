@@ -13,20 +13,26 @@ a development agent works through **sequentially, one phase at a time**. Each ph
 self-contained dispatch unit: the agent receives the brief, decomposes it internally,
 builds it, and must pass the phase's **Done gate** before the next phase is dispatched.
 
-**Execution model.** One agent, strictly sequential. Each phase assumes everything in
-the prior phases is merged, tested, and green. Do not begin a phase until its
-predecessor's Done gate is satisfied.
+### Execution model
 
-**Verification bar (every phase).** A phase is "done" only when:
+One agent, strictly sequential. Each phase assumes everything in the prior phases is
+merged, tested, and green. Do not begin a phase until its predecessor's Done gate is satisfied.
+
+### Verification bar (every phase)
+
+A phase is "done" only when:
+
 1. Unit tests for the phase's logic pass.
 2. Integration tests for the phase's user-facing flow pass (where applicable).
 3. The **`recompute_balances(ctx)` reconciliation check passes** — every cached balance
    equals its pure-derived value computed from the ledger. This is the single
    non-negotiable correctness gate and runs in CI from Phase 2 onward.
 
-**Money discipline (applies to all phases).** All amounts are `INTEGER` cents; interest
-is `INTEGER` basis points. Conversions happen only at the HTTP boundary via `money.py`.
-No `DECIMAL`, no float, anywhere in the schema or core logic (Appendix B).
+### Money discipline (applies to all phases)
+
+All amounts are `INTEGER` cents; interest is `INTEGER` basis points. Conversions happen
+only at the HTTP boundary via `money.py`. No `DECIMAL`, no float, anywhere in the schema
+or core logic (Appendix B).
 
 ---
 
@@ -40,6 +46,8 @@ These were open in the spec (§12) and are now **locked**. Agents treat them as 
 | **T2** | Responsive breakpoint | **768px split.** Desktop ≥768px → persistent sidebar. Mobile <768px → bottom nav. | Phase 4 (base layout/nav) |
 | **T3** | Balance storage | **Cache + reconcile.** Cache `cached_balance_cents` and `income_received_cents`; recompute on write and on monthly close. `recompute_balances` is the safety net and the CI gate. Fall back to pure-derive only if drift is ever observed. | Phase 2 (cache + recompute routine) |
 | **T4** | "Correct balance" adjustment UX | **"Update balance."** Neutral copy: "Update balance to match your statement." Creates an adjustment transaction with a memo; no failure connotation. | Phase 6 (debt adjust action) |
+
+---
 
 ---
 
@@ -63,6 +71,8 @@ phase up front and onboarding/import/polish at the end.
 | 9 | Onboarding | 1–8 | Six-step setup gating `setup_complete` |
 | 10 | CSV Import & Settings | 2, 9 | Import/dedup, settings, backup, export |
 | 11 | Polish, Copy & Hardening | all | Language/color rules, undo, a11y, full-suite verification |
+
+---
 
 ---
 
@@ -446,11 +456,20 @@ queue, and milestone celebrations.
 ## Explicitly out of scope (do not build)
 
 Per spec §11, these are **not** in this build and agents must not pull them forward:
-subcategory granularity, sinking funds, retirement/long-term projection, "What Would
-Change?" modeler, automatic bank sync, Pause Before Purchase nudge, time-cost display
-(setting exists, feature disabled), PDF/report export, multiple users / household view
-(seams only, not exposed), native mobile app (JSON API prepared, not built), authentication
-/ hosted deployment.
+
+- Subcategory granularity
+- Sinking funds
+- Retirement/long-term projection
+- "What Would Change?" modeler
+- Automatic bank sync
+- Pause Before Purchase nudge
+- Time-cost display (setting exists, feature disabled)
+- PDF/report export
+- Multiple users / household view (seams only, not exposed)
+- Native mobile app (JSON API prepared, not built)
+- Authentication / hosted deployment
+
+### Multi-user seams
 
 The multi-user seams (`account_id` everywhere, `AccountContext` in every service,
 Alembic from day one, integer-cents/portable SQL) **are** built — but never exposed. The
@@ -460,14 +479,14 @@ hosted/multi-user migration (Appendix A) is future work.
 
 ## Cross-cutting invariants (audit every phase against these)
 
-1. **One write path.** Every transaction is created/voided/edited through `services/ledger.py`.
-2. **Transactions are truth; balances derive.** No authoritative balance lives outside the
+1. **One write path** — Every transaction is created/voided/edited through `services/ledger.py`.
+2. **Transactions are truth; balances derive** — No authoritative balance lives outside the
    ledger; caches are always recomputable and reconciled.
-3. **Integer cents / basis points only.** Floats and `DECIMAL` never enter schema or core.
-4. **Account-scoped everything.** Every query filters by `ctx.account_id`; every service
+3. **Integer cents / basis points only** — Floats and `DECIMAL` never enter schema or core.
+4. **Account-scoped everything** — Every query filters by `ctx.account_id`; every service
    takes `ctx` first.
-5. **Loopback only.** `127.0.0.1:5000`, never `0.0.0.0`.
-6. **Calm by design.** Never red; no guilt copy; reversible actions; first-action prompts.
+5. **Loopback only** — `127.0.0.1:5000`, never `0.0.0.0`.
+6. **Calm by design** — Never red; no guilt copy; reversible actions; first-action prompts.
 
 ---
 
