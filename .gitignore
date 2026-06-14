@@ -12,3 +12,4 @@ backups/
 .pytest_cache/
 .venv/
 venv/
+.worktrees/
