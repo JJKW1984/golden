@@ -62,3 +62,65 @@ class AllocationTriageResponse(BaseModel):
     funded_allocations: list[BudgetAllocationResponse]
     unfunded_allocations: list[BudgetAllocationResponse]
     options: list[str]  # ["lower_target", "defer_emergency_fund", "expect_more_income"]
+
+
+class MilestoneResponse(BaseModel):
+    """Response model for a created milestone."""
+    threshold: int
+    message: str
+
+    class Config:
+        from_attributes = True
+
+
+class CheckinResponse(BaseModel):
+    """Response after recording a check-in."""
+    checkin_id: int
+    streak: int
+    milestones_created: list[MilestoneResponse]
+
+    class Config:
+        from_attributes = True
+
+
+class DashboardPulseResponse(BaseModel):
+    """Weekly spending pulse data."""
+    spent_cents: int
+    target_cents: int
+    percentage: int
+
+    class Config:
+        from_attributes = True
+
+
+class DashboardMissionResponse(BaseModel):
+    """Current active mission with progress."""
+    title: str
+    progress: int  # 0-100
+    target: str
+
+    class Config:
+        from_attributes = True
+
+
+class NextRightActionResponse(BaseModel):
+    """Next right action prompt."""
+    action: str
+    label: str
+    hint: str
+
+    class Config:
+        from_attributes = True
+
+
+class DashboardResponse(BaseModel):
+    """Complete dashboard data structure."""
+    greeting: str
+    date: str
+    streak: int
+    current_mission: DashboardMissionResponse | None
+    this_week_pulse: DashboardPulseResponse
+    next_right_action: NextRightActionResponse
+
+    class Config:
+        from_attributes = True
