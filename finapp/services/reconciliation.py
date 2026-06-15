@@ -121,6 +121,7 @@ def compute_savings_goal_balance_cents(
 def recompute_balances(db: Session, account_id: int) -> dict:
     """
     Rebuild all cached balances from the ledger and return a report of any drift.
+    Does NOT update cached values; only detects and reports drift.
 
     Returns a dict with keys:
     - drifts: list of {table, id, field, cached, derived} showing any mismatches
@@ -171,3 +172,33 @@ def recompute_balances(db: Session, account_id: int) -> dict:
         "drifts": drifts,
         "total_drift": len(drifts),
     }
+
+
+def apply_recomputed_balances(db: Session, account_id: int) -> dict:
+    """
+    Rebuild all cached balances and UPDATE them in the database.
+    Used after transaction writes to keep caches fresh.
+    Returns the drift report.
+    """
+    # Update BudgetPeriod.income_received_cents
+    periods = db.query(BudgetPeriod).filter_by(account_id=account_id).all()
+    for period in periods:
+        derived = compute_budget_income_received_cents(db, account_id, period.id)
+        period.income_received_cents = derived
+
+    # Update DebtAccount.cached_balance_cents
+    debts = db.query(DebtAccount).filter_by(account_id=account_id).all()
+    for debt in debts:
+        derived = compute_debt_balance_cents(db, account_id, debt.id)
+        debt.cached_balance_cents = derived
+
+    # Update SavingsGoal.cached_balance_cents
+    goals = db.query(SavingsGoal).filter_by(account_id=account_id).all()
+    for goal in goals:
+        derived = compute_savings_goal_balance_cents(db, account_id, goal.id)
+        goal.cached_balance_cents = derived
+
+    db.commit()
+
+    # Run reconciliation check to verify zero drift after update
+    return recompute_balances(db, account_id)
