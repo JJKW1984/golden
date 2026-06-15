@@ -188,3 +188,12 @@ def get_net_worth_cents(ctx: AccountContext) -> int:
     total_debt = sum(get_debt_balance_cents(ctx, d.id) for d in debts)
 
     return assets - total_debt
+
+
+def get_essentials_target_cents(ctx: AccountContext, period_id: int) -> int:
+    """
+    Helper: sum of essential category targets (Debt, Emergency Fund, Housing, Food, Transportation).
+    Used for triage logic.
+    """
+    from finapp.services.allocation import compute_essentials_target_cents
+    return compute_essentials_target_cents(ctx, period_id)
