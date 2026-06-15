@@ -1,36 +1,61 @@
 """
-Allocation service: cumulative-envelope allocation and income-allocation flow.
+Allocation service: cumulative monthly envelope and income/allocation flow.
+This is Phase 3's core business logic.
 
-The allocation engine implements the zero-based, cumulative-envelope budgeting model.
-Income is allocated to categories in a fixed priority order each month.
-Later paychecks accumulate funding without reopening the ritual.
+EXAMPLE: Zero-based budgeting with cumulative envelopes
+---
+User receives $2,000 in June.
+Targets set: Debt $250, Emergency Fund $500, Housing $800, Food $200, Everything Else $250 ($2,000 total).
+
+Funded computation (priority order):
+1. Debt claims $250 (full target), remaining income = $1,750
+2. Emergency Fund claims $500 (full target), remaining = $1,250
+3. Housing claims $800 (full target), remaining = $450
+4. Food claims $200 (full target), remaining = $250
+5. Everything Else claims $250 (full target), remaining = $0
+
+Result: unallocated = $0, zero-based block is clear. User can proceed.
+
+EXAMPLE: Biweekly paycheck flow (no ritual reopen)
+---
+First paycheck (June 1, $1,000): Targets set as above.
+  Funded: Debt $250, Emergency Fund $500, Housing $250, others $0.
+  Unallocated = $0.
+
+Second paycheck (June 15, $1,000): Income now $2,000 total.
+  Targets still fixed from June 1 ritual.
+  Funded: Debt $250, Emergency Fund $500, Housing $800, Food $200, Everything Else $250.
+  Unallocated = $0 (no ritual reopen).
+
+EXAMPLE: Insufficient income (triage path)
+---
+Targets: Debt $250, Emergency Fund $500, Housing $400, Food $200 ($1,350 essentials).
+Income received: $600 (insufficient).
+
+Triage engages:
+  - Funding priority: Debt $250, Emergency Fund $350, Housing $0, Food $0.
+  - Shortfall: $750.
+  - User options: lower targets, defer Emergency Fund, or wait for more income.
+  - NO hard block (allows soft allocation).
 
 Key concepts:
-- Target: planned amount per category for the period (set once per period during ritual)
-- Funded: portion of received income claimed by each category (cumulative, derived from targets)
-- Spent: sum of expenses in the period (derived from ledger)
-- Remaining: funded - spent (can be negative if overspent)
+- target_cents: planned amount per category for the month (set once per month)
+- funded_cents: portion of received income claimed by targets in priority order
+- spent_cents: actual expenses in the category
+- remaining_cents: funded - spent (can be negative if overspent)
+- unallocated_cents: total income - sum(targets)
 
-Priority order (immutable):
-  1. Debt (minimum payments, pay-yourself-first)
-  2. Emergency Fund (savings obligation)
-  3. Housing (core need)
-  4. Food (core need)
-  5. Transportation (core need)
-  6. Personal (discretionary)
-  7. Everything Else (absorption category for leftovers)
+Allocation is deterministic and priority-ordered:
+1. Debt (minimum payment obligations)
+2. Emergency Fund (savings goal)
+3. Housing (essential fixed)
+4. Food (essential variable)
+5. Transportation (essential)
+6. Personal (discretionary)
+7. Everything Else (catch-all for leftovers)
 
-Categories not in the priority list get 0 funded.
-
-Example:
-  Income: $2,000
-  Targets: Debt $250, Emergency Fund $500, Housing $800, Food $200, Everything Else $0
-  Funded: Debt $250, Emergency Fund $500, Housing $800, Food $200, Everything Else $250
-  (Everything Else absorbs the leftover $250)
-
-Triage edge case (6.2):
-  If received income < essentials target, don't hard-block on negative remainder.
-  Instead, offer to: lower a target, defer emergency fund, or "more income expected."
+When income >= essentials: zero-based hard block (must allocate all income).
+When income < essentials: triage path (priority funding, visibility into unfunded).
 """
 from datetime import datetime
 from sqlalchemy import func
