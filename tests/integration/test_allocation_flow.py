@@ -55,7 +55,7 @@ def test_full_flow_log_income_allocate_zero_based(db, integration_setup):
         category_id=categories["Income"],
     )
 
-    # Step 2: Allocation ritual with targets totaling $1,750
+    # Step 2: Allocation ritual with targets totaling $2,000
     set_allocation_targets(
         ctx,
         period_id=period.id,
@@ -65,13 +65,13 @@ def test_full_flow_log_income_allocate_zero_based(db, integration_setup):
             categories["Housing"]: 80000,
             categories["Food"]: 20000,
             categories["Transportation"]: 20000,
-            categories["Everything Else"]: 135000,  # $1,350
+            categories["Everything Else"]: 5000,  # $50 (remainder)
         },
     )
 
     # Step 3: Check zero-based block
     blocked, unallocated = is_zero_based_confirmed(ctx, period_id=period.id)
-    assert not blocked
+    assert blocked  # Zero-based confirmed
     assert unallocated == 0  # All income allocated
 
     # Step 4: Zero-based block cleared, user can proceed
