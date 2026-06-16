@@ -1,0 +1,26 @@
+finapp/schemas.py
+  s_7ae786d310027e::t_48f26813663aab 348-364
+finapp/routers/milestones.py
+  s_7ae786d310027e::t_b546570980d0ae 1-51
+tests/test_milestones_router.py
+  s_7ae786d310027e::t_fbe16c4eb743a3 1-45
+finapp/main.py
+  s_7ae786d310027e::t_cb5f61eecb36e5 5
+  s_7ae786d310027e::t_5fa3bd11e95f7f 20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "19abd0e738bc21d8208d6664140f0b38d6da41d4",
+  "prompts": {},
+  "sessions": {
+    "s_7ae786d310027e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dc6ee771-54f0-480c-b36d-93eca732eaa4",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    }
+  }
+}
