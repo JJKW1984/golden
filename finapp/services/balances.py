@@ -9,6 +9,7 @@ from finapp.models import (
     Transaction,
     BudgetCategory,
     BudgetPeriod,
+    BudgetAllocation,
     DebtAccount,
     SavingsGoal,
     AssetAccount,
@@ -111,60 +112,75 @@ def get_savings_goal_balance_cents(ctx: AccountContext, goal_id: int) -> int:
     return max(0, derived_balance)
 
 
-def get_days_of_expenses_coverage(ctx: AccountContext, goal_id: int) -> int:
+def get_current_period_spending_target_cents(ctx: AccountContext) -> int:
     """
-    Derive: days of expenses coverage from emergency fund balance.
-    Uses trailing 90-day average daily spending.
-    If less than 30 days of data, estimates from available data.
-    Returns estimated number of days covered.
+    Sum of target_cents for kind='spending' categories in the current calendar-month
+    period. Returns 0 if no period or no allocations exist yet (no side effects —
+    does not create a period).
     """
-    goal = ctx.db.query(SavingsGoal).filter_by(
-        account_id=ctx.account_id, id=goal_id
+    today = date.today()
+    period = ctx.db.query(BudgetPeriod).filter_by(
+        account_id=ctx.account_id, year=today.year, month=today.month
     ).first()
 
-    if not goal:
+    if not period:
         return 0
 
+    total = ctx.db.query(func.sum(BudgetAllocation.target_cents)).filter(
+        BudgetAllocation.account_id == ctx.account_id,
+        BudgetAllocation.period_id == period.id,
+    ).join(BudgetCategory, BudgetAllocation.category_id == BudgetCategory.id).filter(
+        BudgetCategory.kind == "spending",
+    ).scalar()
+
+    return total or 0
+
+
+def get_days_of_expenses_coverage(ctx: AccountContext, goal_id: int) -> tuple[int, bool]:
+    """
+    Derive: days of expenses coverage from emergency fund balance (spec §4.14).
+
+    avg_daily_expense = (sum of kind='spending' category transactions over the
+    trailing 90 days) / 90.
+
+    If fewer than 30 days of spending history exist, fall back to
+    (sum of current-period spending category targets) / 30, labeled "estimated".
+
+    Returns:
+        (days_of_coverage, estimated) tuple. estimated=True when the fallback was used.
+    """
     balance = get_savings_goal_balance_cents(ctx, goal_id)
 
-    # Get all spending transactions (non-income, non-linked) from last 90 days
     today = date.today()
     days_back = 90
     cutoff_date = today - timedelta(days=days_back)
 
-    spending_txns = ctx.db.query(Transaction).filter(
+    spending_txns = ctx.db.query(Transaction).join(
+        BudgetCategory, Transaction.category_id == BudgetCategory.id
+    ).filter(
         Transaction.account_id == ctx.account_id,
         Transaction.date >= cutoff_date,
         Transaction.direction == "out",
-        Transaction.link_type == None,  # Regular expenses, not debt/savings
         Transaction.is_deleted == False,
+        BudgetCategory.kind == "spending",
     ).all()
 
-    if not spending_txns:
-        # No spending data, estimate can't be calculated
-        return 0
+    earliest_date = min((t.date for t in spending_txns), default=None)
+    days_with_data = (today - earliest_date).days + 1 if earliest_date else 0
 
-    total_spent = sum(t.amount_cents for t in spending_txns)
-
-    # Get the date range of available data
-    min_date = min(t.date for t in spending_txns)
-    max_date = max(t.date for t in spending_txns)
-    days_with_data = (max_date - min_date).days + 1
-
-    if days_with_data < 30:
-        # Less than 30 days of data: estimate from what we have
-        if days_with_data > 0:
-            daily_avg = total_spent // days_with_data if days_with_data > 0 else 1
-        else:
-            return 0
+    if days_with_data >= 30:
+        total_spent = sum(t.amount_cents for t in spending_txns)
+        daily_avg = total_spent // days_back
+        estimated = False
     else:
-        # At least 30 days: use trailing 90-day average
-        daily_avg = total_spent // days_back if days_back > 0 else 1
+        target_total = get_current_period_spending_target_cents(ctx)
+        daily_avg = target_total // 30
+        estimated = True
 
     if daily_avg == 0:
-        return 0
+        return (0, estimated)
 
-    return balance // daily_avg
+    return (balance // daily_avg, estimated)
 
 
 def get_net_worth_cents(ctx: AccountContext) -> int:

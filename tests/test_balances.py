@@ -7,6 +7,7 @@ from datetime import date, timedelta
 from finapp.models import (
     BudgetPeriod,
     BudgetCategory,
+    BudgetAllocation,
     Transaction,
     DebtAccount,
     SavingsGoal,
@@ -325,42 +326,50 @@ class TestSavingsGoalBalance:
 
 
 class TestDaysOfExpensesCoverage:
-    """Test emergency fund coverage calculation."""
+    """Test emergency fund coverage calculation (spec §4.14)."""
 
-    def test_coverage_trailing_90_days(self, db, ctx, setup_account):
-        """Calculate coverage from trailing 90-day average."""
+    def test_coverage_uses_spending_category_only(self, db, ctx, setup_account):
+        """Only kind='spending' category transactions count toward avg_daily_expense."""
         account, period = setup_account
         food_cat = db.query(BudgetCategory).filter_by(
             account_id=account.id, name="Food"
         ).first()
+        debt_cat = BudgetCategory(
+            account_id=account.id, name="Debt", kind="debt", is_system=True, is_active=True,
+        )
+        db.add(debt_cat)
+        db.commit()
 
         goal = SavingsGoal(
             account_id=account.id,
             name="Emergency Fund",
             goal_type="emergency_fund",
-            target_cents=300000,  # $3000
+            target_cents=300000,
             opening_balance_cents=300000,
             cached_balance_cents=300000,
         )
         db.add(goal)
-
-        # Add spending over last 90 days
-        # Spend $100/day = $9000 total over 90 days = $100/day average
-        for i in range(90):
-            day = date(2026, 6, 15) - timedelta(days=i)
-            if day.month == period.month and day.year == period.year:
-                create_transaction(ctx, date=day, amount_cents=10000,
-                                  direction="out", category_id=food_cat.id)
-
         db.commit()
 
-        # Emergency fund: $3000, average daily: depends on data
-        # This is a simplified test - real calculation depends on full 90-day history
-        coverage = get_days_of_expenses_coverage(ctx, goal.id)
-        assert coverage >= 0  # Should return valid number
+        # 90 days of $10/day spending (kind='spending')
+        for i in range(90):
+            day = date(2026, 6, 15) - timedelta(days=i)
+            create_transaction(ctx, date=day, amount_cents=1000,
+                                direction="out", category_id=food_cat.id)
+        # A large debt payment that must NOT count as "spending"
+        create_transaction(ctx, date=date(2026, 6, 15), amount_cents=500000,
+                            direction="out", category_id=debt_cat.id, link_type="debt", link_id=None)
+        db.commit()
 
-    def test_coverage_less_than_30_days_data(self, db, ctx, setup_account):
-        """Use estimated average when less than 30 days of data."""
+        days, estimated = get_days_of_expenses_coverage(ctx, goal.id)
+
+        # avg_daily_expense = (90 * 1000) / 90 = 1000 cents/day
+        # coverage = 300000 / 1000 = 300 days
+        assert days == 300
+        assert estimated is False
+
+    def test_coverage_fallback_uses_spending_targets_when_under_30_days(self, db, ctx, setup_account):
+        """With < 30 days of spending history, fall back to current-period spending targets / 30, labeled estimated."""
         account, period = setup_account
         food_cat = db.query(BudgetCategory).filter_by(
             account_id=account.id, name="Food"
@@ -375,16 +384,41 @@ class TestDaysOfExpensesCoverage:
             cached_balance_cents=300000,
         )
         db.add(goal)
-        db.commit()
 
-        # Add spending for just 10 days
+        allocation = BudgetAllocation(
+            account_id=account.id, period_id=period.id, category_id=food_cat.id,
+            target_cents=30000,  # $300 spending target this period
+        )
+        db.add(allocation)
+
+        # Only 10 days of spending history (< 30)
         for i in range(10):
             day = date(2026, 6, 15) - timedelta(days=i)
-            create_transaction(ctx, date=day, amount_cents=10000,
-                              direction="out", category_id=food_cat.id)
-
+            create_transaction(ctx, date=day, amount_cents=500,
+                                direction="out", category_id=food_cat.id)
         db.commit()
 
-        # With less than 30 days, estimate from available data
-        coverage = get_days_of_expenses_coverage(ctx, goal.id)
-        assert coverage >= 0
+        days, estimated = get_days_of_expenses_coverage(ctx, goal.id)
+
+        # avg_daily_expense = 30000 / 30 = 1000 cents/day
+        # coverage = 300000 / 1000 = 300 days
+        assert days == 300
+        assert estimated is True
+
+    def test_coverage_no_data_no_targets_returns_zero(self, db, ctx, setup_account):
+        """No spending history and no spending targets -> 0 days, estimated."""
+        account, period = setup_account
+        goal = SavingsGoal(
+            account_id=account.id,
+            name="Emergency Fund",
+            goal_type="emergency_fund",
+            target_cents=300000,
+            opening_balance_cents=300000,
+            cached_balance_cents=300000,
+        )
+        db.add(goal)
+        db.commit()
+
+        days, estimated = get_days_of_expenses_coverage(ctx, goal.id)
+        assert days == 0
+        assert estimated is True
