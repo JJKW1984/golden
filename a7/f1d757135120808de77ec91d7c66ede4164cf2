@@ -1,0 +1,21 @@
+tests/test_milestones.py
+  s_7ae786d310027e::t_ec138fbf2ed2e6 49-107
+finapp/services/reconciliation.py
+  s_7ae786d310027e::t_f63dcc1bb590df 181-183,186-190,202-211,218,221-228
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "a7f1d757135120808de77ec91d7c66ede4164cf2",
+  "prompts": {},
+  "sessions": {
+    "s_7ae786d310027e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dc6ee771-54f0-480c-b36d-93eca732eaa4",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    }
+  }
+}
