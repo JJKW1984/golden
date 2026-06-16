@@ -1,0 +1,21 @@
+finapp/services/missions.py
+  s_7ae786d310027e::t_235211b212e711 1-121
+tests/test_missions.py
+  s_7ae786d310027e::t_57afcd72c495cd 1-143
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "14ade4695004906ebdbddfa9e152cb72cf8c059b",
+  "prompts": {},
+  "sessions": {
+    "s_7ae786d310027e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dc6ee771-54f0-480c-b36d-93eca732eaa4",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    }
+  }
+}
