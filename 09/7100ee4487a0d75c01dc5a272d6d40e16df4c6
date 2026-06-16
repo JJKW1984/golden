@@ -1,0 +1,28 @@
+finapp/main.py
+  s_7ae786d310027e::t_e3086adb77ff34 5
+  s_7ae786d310027e::t_b058adae1137c2 19
+finapp/schemas.py
+  s_7ae786d310027e::t_8d91b8e02c85f6 335-347
+finapp/routers/reviews.py
+  s_7ae786d310027e::t_51ef2a3201c827 1-95
+finapp/templates/reviews.html
+  s_7ae786d310027e::t_5c8b459e7c5dd9 1-15
+tests/test_reviews_router.py
+  s_7ae786d310027e::t_2e2a96181b23cb 1-59
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "097100ee4487a0d75c01dc5a272d6d40e16df4c6",
+  "prompts": {},
+  "sessions": {
+    "s_7ae786d310027e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dc6ee771-54f0-480c-b36d-93eca732eaa4",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    }
+  }
+}
