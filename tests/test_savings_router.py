@@ -124,3 +124,41 @@ def test_post_savings_contribution_unknown_goal_404s(test_client):
     })
 
     assert response.status_code == 404
+
+
+def test_get_emergency_fund_api(test_client, savings_goal):
+    client, db, account_id = test_client
+
+    response = client.get("/api/savings/emergency")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["goal_id"] == savings_goal.id
+    assert data["balance_cents"] == 100000
+    assert data["target_cents"] == 300000
+    assert data["percent_complete"] == 33  # 100000/300000 rounded down
+
+
+def test_get_emergency_fund_api_no_goal_404s(test_client):
+    client, db, account_id = test_client
+
+    response = client.get("/api/savings/emergency")
+
+    assert response.status_code == 404
+
+
+def test_get_savings_screen(test_client, savings_goal):
+    client, db, account_id = test_client
+
+    other_goal = SavingsGoal(
+        account_id=account_id, name="Vacation", goal_type="sinking_fund",
+        target_cents=50000, opening_balance_cents=10000, cached_balance_cents=10000,
+    )
+    db.add(other_goal)
+    db.commit()
+
+    response = client.get("/savings")
+
+    assert response.status_code == 200
+    assert "Emergency Fund" in response.text
+    assert "Vacation" in response.text

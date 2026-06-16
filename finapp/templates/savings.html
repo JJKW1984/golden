@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Savings{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 space-y-6">
+    <h1 class="text-3xl font-bold">Savings</h1>
+
+    {% if emergency %}
+    <div class="border-2 border-teal-500 rounded-lg p-6 bg-teal-50">
+        <h2 class="text-xl font-bold mb-4">{{ emergency.name }}</h2>
+
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div>
+                <p class="text-gray-600 text-sm">Balance</p>
+                <p class="text-2xl font-bold">${{ "%.2f"|format(emergency.balance) }}</p>
+            </div>
+            <div>
+                <p class="text-gray-600 text-sm">Target</p>
+                <p class="text-2xl font-bold">${{ "%.2f"|format(emergency.target) }}</p>
+            </div>
+            <div>
+                <p class="text-gray-600 text-sm">Progress</p>
+                <p class="text-xl">{{ emergency.percent_complete }}%</p>
+            </div>
+            <div>
+                <p class="text-gray-600 text-sm">
+                    Days of expenses covered{% if emergency.days_estimated %} (estimated){% endif %}
+                </p>
+                <p class="text-xl">{{ emergency.days_of_coverage }} days</p>
+            </div>
+        </div>
+
+        {% if emergency.is_complete %}
+        <p class="text-teal-800 font-semibold">You've reached your emergency fund target.</p>
+        {% elif emergency.est_complete_date %}
+        <p class="text-gray-700">Estimated complete: {{ emergency.est_complete_date }}</p>
+        {% endif %}
+
+        <div class="flex gap-2 flex-wrap mt-4">
+            <button class="bg-teal-500 hover:bg-teal-600 text-white px-6 py-2 rounded font-medium"
+                    onclick="openContributionModal({{ emergency.id }})">
+                Add Contribution
+            </button>
+            <button class="bg-gray-200 hover:bg-gray-300 px-6 py-2 rounded font-medium text-gray-800"
+                    onclick="openWithdrawalModal({{ emergency.id }})">
+                Withdraw
+            </button>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if other_goals %}
+    <div class="space-y-3">
+        <h3 class="text-lg font-bold">Other Goals</h3>
+        {% for goal in other_goals %}
+        <div class="border rounded-lg p-4 bg-white">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h4 class="font-semibold">{{ goal.name }}</h4>
+                    <p class="text-gray-600 text-sm">${{ "%.2f"|format(goal.balance) }} of ${{ "%.2f"|format(goal.target) }}</p>
+                </div>
+                <div class="text-right">
+                    <p class="font-semibold">{{ goal.percent_complete }}%</p>
+                    {% if goal.is_complete %}<p class="text-teal-700 text-xs">Complete</p>{% endif %}
+                </div>
+            </div>
+            <div class="flex gap-2 mt-3">
+                <button class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-1.5 rounded text-sm font-medium"
+                        onclick="openContributionModal({{ goal.id }})">
+                    Add Contribution
+                </button>
+                <button class="bg-gray-200 hover:bg-gray-300 px-4 py-1.5 rounded text-sm font-medium text-gray-800"
+                        onclick="openWithdrawalModal({{ goal.id }})">
+                    Withdraw
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if not emergency and not other_goals %}
+    <div class="bg-gray-50 rounded-lg p-8 text-center">
+        <p class="text-gray-600">No savings goals yet</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function openContributionModal(goalId) {
+    const amount = prompt("Enter contribution amount in dollars:");
+    if (amount) {
+        fetch('/savings/contribution', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ goal_id: goalId, amount_cents: Math.round(parseFloat(amount) * 100) })
+        })
+        .then(r => r.json())
+        .then(() => location.reload())
+        .catch(err => alert('Error: ' + err.message));
+    }
+}
+
+function openWithdrawalModal(goalId) {
+    const amount = prompt("Enter withdrawal amount in dollars:");
+    if (amount) {
+        fetch('/savings/withdrawal', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ goal_id: goalId, amount_cents: Math.round(parseFloat(amount) * 100) })
+        })
+        .then(r => r.json())
+        .then(() => location.reload())
+        .catch(err => alert('Error: ' + err.message));
+    }
+}
+</script>
+{% endblock %}

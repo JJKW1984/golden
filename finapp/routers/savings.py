@@ -91,3 +91,87 @@ def post_savings_withdrawal(
 
     ctx.db.refresh(goal)
     return {"goal_id": goal.id, "new_balance_cents": goal.cached_balance_cents}
+
+
+def _emergency_fund_goal(ctx: AccountContext) -> SavingsGoal | None:
+    return ctx.db.query(SavingsGoal).filter_by(
+        account_id=ctx.account_id, goal_type="emergency_fund", is_active=True
+    ).first()
+
+
+@router.get("/api/savings/emergency")
+def get_emergency_fund(ctx: AccountContext = Depends(get_account_context)) -> dict:
+    """Get Emergency Fund card data (Screen 5)."""
+    goal = _emergency_fund_goal(ctx)
+    if not goal:
+        raise HTTPException(status_code=404, detail="No emergency fund goal found")
+
+    balance = get_savings_goal_balance_cents(ctx, goal.id)
+    days, estimated = get_days_of_expenses_coverage(ctx, goal.id)
+    months, est_date = estimate_savings_completion(ctx, goal.id)
+
+    percent_complete = 0
+    if goal.target_cents > 0:
+        percent_complete = int(100 * balance / goal.target_cents)
+
+    return {
+        "goal_id": goal.id,
+        "balance_cents": balance,
+        "target_cents": goal.target_cents,
+        "percent_complete": percent_complete,
+        "days_of_coverage": days,
+        "days_of_coverage_estimated": estimated,
+        "est_complete_months": months,
+        "est_complete_date": est_date,
+    }
+
+
+@router.get("/savings", response_class=HTMLResponse)
+def get_savings_screen(
+    request: Request,
+    ctx: AccountContext = Depends(get_account_context),
+) -> str:
+    """Savings screen: Emergency Fund card + Other Goals."""
+    goals = ctx.db.query(SavingsGoal).filter_by(
+        account_id=ctx.account_id, is_active=True
+    ).all()
+
+    emergency = None
+    other_goals = []
+
+    for goal in goals:
+        balance = get_savings_goal_balance_cents(ctx, goal.id)
+        percent_complete = int(100 * balance / goal.target_cents) if goal.target_cents > 0 else 0
+
+        if goal.goal_type == "emergency_fund":
+            days, estimated = get_days_of_expenses_coverage(ctx, goal.id)
+            months, est_date = estimate_savings_completion(ctx, goal.id)
+            emergency = {
+                "id": goal.id,
+                "name": goal.name,
+                "balance": balance / 100,
+                "target": goal.target_cents / 100,
+                "percent_complete": percent_complete,
+                "days_of_coverage": days,
+                "days_estimated": estimated,
+                "est_complete_date": est_date,
+                "is_complete": goal.is_complete,
+            }
+        else:
+            other_goals.append({
+                "id": goal.id,
+                "name": goal.name,
+                "balance": balance / 100,
+                "target": goal.target_cents / 100,
+                "percent_complete": percent_complete,
+                "is_complete": goal.is_complete,
+            })
+
+    return templates.TemplateResponse(
+        "savings.html",
+        {
+            "request": request,
+            "emergency": emergency,
+            "other_goals": other_goals,
+        },
+    )
