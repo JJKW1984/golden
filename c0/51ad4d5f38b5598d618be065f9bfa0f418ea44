@@ -1,0 +1,20 @@
+tests/test_reviews.py
+  s_7ae786d310027e::t_7dfef6fbdea588 73-117,119,124-136
+  s_7ae786d310027e::t_01e71ee5384e82 118,120-123
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "c051ad4d5f38b5598d618be065f9bfa0f418ea44",
+  "prompts": {},
+  "sessions": {
+    "s_7ae786d310027e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dc6ee771-54f0-480c-b36d-93eca732eaa4",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    }
+  }
+}
