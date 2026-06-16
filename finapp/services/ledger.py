@@ -5,9 +5,9 @@ This ensures consistent handling of period assignment, dedup hashing, and soft d
 After every write, reconciliation is run to update cached balances.
 """
 import hashlib
-from datetime import date
+from datetime import date, datetime
 from sqlalchemy.orm import Session
-from finapp.models import Transaction, BudgetPeriod
+from finapp.models import Transaction, BudgetPeriod, DebtAccount
 from finapp.deps import AccountContext
 
 
@@ -77,6 +77,7 @@ def create_transaction(
     Create a new transaction through the single write path.
     Automatically assigns period from date.
     Computes import hash if imported.
+    Handles debt payment split into principal/interest.
     """
     # Get or create the period for this transaction's date
     period = get_or_create_period(ctx.db, ctx.account_id, date)
@@ -85,6 +86,24 @@ def create_transaction(
     import_hash = None
     if is_imported:
         import_hash = compute_import_hash(date, amount_cents, payee)
+
+    # Handle debt payment: split into principal and interest
+    if link_type == "debt" and link_id is not None:
+        if principal_cents is None or interest_cents is None:
+            # Fetch the debt account to get balance and interest rate
+            debt = ctx.db.query(DebtAccount).filter_by(
+                id=link_id, account_id=ctx.account_id
+            ).first()
+            if debt:
+                from finapp.services.debt_payoff import amortize_month
+                principal_cents, interest_cents = amortize_month(
+                    opening_cents=debt.cached_balance_cents,
+                    interest_rate_bps=debt.interest_rate_bps,
+                    payment_cents=amount_cents
+                )
+                # Verify invariant: principal + interest = amount
+                assert principal_cents + interest_cents == amount_cents, \
+                    f"Amortization invariant failed: {principal_cents} + {interest_cents} != {amount_cents}"
 
     txn = Transaction(
         account_id=ctx.account_id,
@@ -221,6 +240,73 @@ def restore_transaction(ctx: AccountContext, txn_id: int) -> Transaction:
         raise ValueError(f"Transaction {txn_id} not found")
 
     txn.is_deleted = False
+    ctx.db.commit()
+
+    # Refresh cached balances after write
+    _refresh_balances_after_write(ctx.db, ctx.account_id)
+
+    return txn
+
+
+def create_debt_adjustment(
+    ctx: AccountContext,
+    debt_id: int,
+    adjustment_cents: int,
+    statement_balance_cents: int
+) -> Transaction:
+    """
+    Create a debt adjustment transaction when actual balance differs from cached.
+
+    Used when reconciling a debt account's cached balance with the statement balance.
+    Creates a special transaction with:
+    - link_type='debt', link_id=debt_id
+    - principal_cents=adjustment_cents (negative if balance was overstated)
+    - interest_cents=0 (adjustments have no interest component)
+    - mood_tag=None (adjustments don't get mood tags)
+    - kind='adjustment'
+
+    Args:
+        ctx: AccountContext for account scoping
+        debt_id: ID of the DebtAccount being adjusted
+        adjustment_cents: negative if balance was overstated, positive if understated
+        statement_balance_cents: the correct balance per statement
+
+    Returns:
+        Transaction created with link_type='debt', principal_cents=adjustment_cents, interest_cents=0
+    """
+    debt = ctx.db.query(DebtAccount).filter_by(
+        id=debt_id, account_id=ctx.account_id
+    ).first()
+    if not debt:
+        raise ValueError(f"Debt account {debt_id} not found for account {ctx.account_id}")
+
+    # Get or create the period for today's date
+    today = datetime.now().date()
+    period = get_or_create_period(ctx.db, ctx.account_id, today)
+
+    # Direction is "in" if adjustment positive (balance was understated, reducing the debt)
+    # Direction is "out" if adjustment negative (balance was overstated, increasing the debt)
+    direction = "in" if adjustment_cents > 0 else "out"
+
+    txn = Transaction(
+        account_id=ctx.account_id,
+        period_id=period.id,
+        date=today,
+        amount_cents=abs(adjustment_cents),
+        direction=direction,
+        category_id=None,
+        payee="",
+        memo=f"Update balance to match your statement: ${statement_balance_cents/100:.2f}",
+        mood_tag=None,
+        link_type="debt",
+        link_id=debt_id,
+        principal_cents=adjustment_cents,
+        interest_cents=0,
+        is_imported=False,
+        import_hash=None,
+        is_deleted=False
+    )
+    ctx.db.add(txn)
     ctx.db.commit()
 
     # Refresh cached balances after write
