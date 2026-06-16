@@ -308,3 +308,27 @@ class NetWorthResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# Phase 8: Missions, Reviews, Milestones
+
+class MissionProgressResponse(BaseModel):
+    """A single mission with derived progress."""
+    id: int
+    name: str
+    mission_type: str
+    link_type: str | None
+    link_id: int | None
+    sort_order: int | None
+    start_cents: int
+    current_cents: int
+    target_cents: int
+    percent: int
+
+    class Config:
+        from_attributes = True
+
+
+class MissionReorderRequest(BaseModel):
+    """Request to reorder the mission queue."""
+    ordered_ids: list[int]
