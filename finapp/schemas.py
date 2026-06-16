@@ -233,3 +233,78 @@ class BudgetReallocateResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# Phase 7: Savings & Net Worth
+
+class SavingsContributionRequest(BaseModel):
+    """Request to contribute to a savings goal."""
+    goal_id: int
+    amount_cents: int
+    memo: str | None = None
+
+
+class SavingsWithdrawalRequest(BaseModel):
+    """Request to withdraw from a savings goal."""
+    goal_id: int
+    amount_cents: int
+    memo: str | None = None
+
+
+class SavingsGoalResponse(BaseModel):
+    """A single savings goal with derived balance."""
+    id: int
+    name: str
+    goal_type: str
+    target_cents: int
+    balance_cents: int
+    percent_complete: int
+    is_complete: bool
+    target_date: date | None
+
+    class Config:
+        from_attributes = True
+
+
+class EmergencyFundResponse(BaseModel):
+    """Emergency Fund card data (Screen 5)."""
+    goal_id: int
+    balance_cents: int
+    target_cents: int
+    percent_complete: int
+    days_of_coverage: int
+    days_of_coverage_estimated: bool
+    est_complete_months: int | None
+    est_complete_date: str | None
+
+    class Config:
+        from_attributes = True
+
+
+class AssetAccountRequest(BaseModel):
+    """Request to add or update an asset account snapshot."""
+    id: int | None = None
+    name: str
+    balance_cents: int
+
+
+class AssetAccountResponse(BaseModel):
+    """Response model for an asset account."""
+    id: int
+    name: str
+    balance_cents: int
+    is_active: bool
+
+    class Config:
+        from_attributes = True
+
+
+class NetWorthResponse(BaseModel):
+    """Net worth summary (9.8)."""
+    net_worth_cents: int
+    total_assets_cents: int
+    total_debt_cents: int
+    trend: list[dict]  # Monthly snapshots; populated starting Phase 8
+
+    class Config:
+        from_attributes = True
