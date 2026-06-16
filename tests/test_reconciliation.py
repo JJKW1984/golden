@@ -257,6 +257,100 @@ def test_recompute_balances_detects_drift(db, populated_account):
     assert drift["derived"] == 100000
 
 
+def test_reconciliation_debt_balance_after_payments(db, populated_account):
+    """
+    Test that debt balance reconciliation passes (zero drift) after debt payments.
+
+    Given: a debt account with multiple payments across months
+    When: recompute_balances() is called
+    Then: derived debt balance equals cached balance (zero drift)
+    """
+    account, period = populated_account
+
+    # Create a debt account with $10,000 opening balance
+    debt = DebtAccount(
+        account_id=account.id,
+        name="Test Debt Account",
+        opening_balance_cents=1000000,  # $10,000
+        cached_balance_cents=1000000,  # Initially correct
+        interest_rate_bps=1200,  # 12%
+        minimum_payment_cents=20000,  # $200 minimum
+    )
+    db.add(debt)
+    db.commit()
+    db.refresh(debt)
+
+    # Create multiple debt payments over 3 months
+    payment_schedule = [
+        (date(2026, 6, 1), 50000),   # $500 payment (month 1)
+        (date(2026, 7, 1), 75000),   # $750 payment (month 2)
+        (date(2026, 8, 1), 100000),  # $1000 payment (month 3)
+    ]
+
+    total_principal = 0
+    for payment_date, payment_amount_cents in payment_schedule:
+        # Create or get the period for this date
+        month = payment_date.month
+        period_for_date = db.query(BudgetPeriod).filter_by(
+            account_id=account.id,
+            year=2026,
+            month=month,
+        ).first()
+
+        if not period_for_date:
+            period_for_date = BudgetPeriod(
+                account_id=account.id,
+                year=2026,
+                month=month,
+                income_received_cents=0,
+                status="active",
+            )
+            db.add(period_for_date)
+            db.commit()
+
+        # Debt payment: assume 90% principal, 10% interest
+        principal_cents = int(payment_amount_cents * 0.9)
+        interest_cents = payment_amount_cents - principal_cents
+
+        txn = Transaction(
+            account_id=account.id,
+            period_id=period_for_date.id,
+            date=payment_date,
+            amount_cents=payment_amount_cents,
+            direction="out",
+            link_type="debt",
+            link_id=debt.id,
+            principal_cents=principal_cents,
+            interest_cents=interest_cents,
+            is_deleted=False,
+        )
+        db.add(txn)
+        total_principal += principal_cents
+
+    db.commit()
+
+    # Update cached balance to simulate drift (intentionally wrong)
+    debt.cached_balance_cents = 900000  # Wrong: should be 10000 - principal_paid
+    db.commit()
+
+    # Run reconciliation - should detect drift
+    report = recompute_balances(db, account.id)
+
+    # Verify drift is detected
+    assert report["total_drift"] > 0, "Expected drift to be detected"
+    debt_drifts = [d for d in report["drifts"] if d["table"] == "DebtAccount" and d["id"] == debt.id]
+    assert len(debt_drifts) == 1, "Expected exactly one DebtAccount drift"
+
+    drift = debt_drifts[0]
+    expected_balance = debt.opening_balance_cents - total_principal
+    assert drift["derived"] == expected_balance, f"Expected derived balance {expected_balance}, got {drift['derived']}"
+    assert drift["cached"] != drift["derived"], "Cached and derived should differ"
+
+    # After reconciliation, balances should be zero drift
+    derived_balance = compute_debt_balance_cents(db, account.id, debt.id)
+    assert derived_balance == expected_balance, f"Derived balance should be {expected_balance}, got {derived_balance}"
+
+
 @pytest.mark.parametrize("seed_value", [42, 123, 456, 789, 999])
 def test_recompute_balances_property_zero_drift(db, account, seed_value):
     """
