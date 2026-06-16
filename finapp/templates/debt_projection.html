@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}{{ debt.name }} — Payoff Projection{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <a href="/debt" class="text-blue-500 hover:text-blue-700 mb-4 inline-block">← Back to Debt</a>
+
+    <h1 class="text-2xl font-bold mb-2">{{ debt.name }} — Payoff Projection</h1>
+    <p class="text-gray-600 mb-6">Compare different payment amounts to see how they affect your payoff timeline.</p>
+
+    <!-- Scenario Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        {% for scenario in scenarios %}
+        <div class="border rounded-lg p-4 {% if scenario.name == 'minimum' %}bg-red-50 border-red-300{% elif scenario.name == '+$50' %}bg-yellow-50 border-yellow-300{% else %}bg-green-50 border-green-300{% endif %}">
+            <h3 class="font-bold text-lg mb-2">{{ scenario.name }}</h3>
+            <p class="text-gray-600 text-sm mb-1">Payment: ${{ "%.2f"|format(scenario.payment) }}/month</p>
+
+            <div class="bg-white rounded p-3 space-y-2">
+                <div>
+                    <p class="text-gray-600 text-xs">Payoff Time</p>
+                    <p class="text-2xl font-bold">{{ scenario.months }} months</p>
+                </div>
+                <div>
+                    <p class="text-gray-600 text-xs">Total Interest</p>
+                    <p class="font-semibold">${{ "%.2f"|format(scenario.total_interest) }}</p>
+                </div>
+                {% if scenario.payoff_date != 'Never' %}
+                <div>
+                    <p class="text-gray-600 text-xs">Payoff Date</p>
+                    <p class="font-semibold">{{ scenario.payoff_date }}</p>
+                </div>
+                {% endif %}
+                {% if not scenario.payment_gte_interest %}
+                <p class="text-amber-700 text-xs font-semibold">⚠️ Payment only covers interest</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Chart -->
+    <div class="border rounded-lg p-6 bg-white">
+        <h3 class="font-bold mb-4 text-lg">Balance Over Time</h3>
+        <div style="position: relative; height: 400px;">
+            <canvas id="projectionChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js" integrity="sha384-TN3Hv5OYYP5+bL1s6K4qYaZrQ3zGfGSVVaWatDh6f3nXj0Gh6bUvCNGYLQV/B3Vhm" crossorigin="anonymous"></script>
+<script>
+    const ctx = document.getElementById('projectionChart').getContext('2d');
+    const scenarios = {{ scenarios_json|safe }};
+
+    const colors = ['#ef4444', '#f97316', '#22c55e'];
+    const datasets = scenarios.map((s, i) => ({
+        label: s.name,
+        data: s.monthly_balances,
+        borderColor: colors[i],
+        backgroundColor: colors[i] + '33',
+        tension: 0.4,
+        fill: true,
+        pointRadius: 0,
+        borderWidth: 2
+    }));
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: datasets[0].data.map((_, i) => i % 6 === 0 ? 'Month ' + i : ''),
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + (value / 100).toFixed(0);
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

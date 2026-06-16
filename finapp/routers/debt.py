@@ -4,11 +4,14 @@ Debt router: HTTP endpoints for debt management.
 Endpoints:
 - GET /debt: List all debt accounts (HTML page)
 - POST /debt/{id}/payment: Record a debt payment
+- GET /debt/{id}/projection: Get payoff projection view (HTML)
 - GET /api/debt/projection/{id}: Get payoff projection scenarios (JSON)
+- GET /api/debt/{id}: Get debt details (JSON)
 - POST /debt/{id}/adjustment: Record a balance adjustment
 """
-from datetime import date
+from datetime import date, datetime, timedelta
 from typing import Optional
+import json
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -18,7 +21,7 @@ from pydantic import BaseModel
 from finapp.deps import get_account_context, AccountContext
 from finapp.models import DebtAccount
 from finapp.services.ledger import create_transaction, create_debt_adjustment
-from finapp.services.debt_payoff import project_debt_payoff
+from finapp.services.debt_payoff import project_debt_payoff, amortize_month
 
 # Initialize templates
 templates = Jinja2Templates(directory="finapp/templates")
@@ -48,32 +51,163 @@ def get_debt_list(
     Get debt list page (HTML).
 
     Returns:
-        HTML page with all debt accounts sorted by sort_order
+        HTML page with active debt target and debt queue
     """
     debts = ctx.db.query(DebtAccount).filter_by(
         account_id=ctx.account_id,
         is_active=True
     ).order_by(DebtAccount.sort_order).all()
 
-    # Convert to dicts for template rendering
-    debt_list = []
-    for debt in debts:
-        debt_list.append({
-            "id": debt.id,
-            "name": debt.name,
-            "creditor": debt.creditor,
-            "balance": debt.cached_balance_cents / 100,
-            "interest_rate": debt.interest_rate_bps / 100,
-            "minimum_payment": debt.minimum_payment_cents / 100,
-        })
+    active_debt = None
+    other_debts = []
+
+    if debts:
+        # Active debt is the first in sort order
+        active = debts[0]
+        months, total_interest, payoff_date, _ = project_debt_payoff(
+            opening_balance_cents=active.cached_balance_cents,
+            interest_rate_bps=active.interest_rate_bps,
+            monthly_payment_cents=active.minimum_payment_cents or 0,
+        )
+
+        percent_paid = 0
+        if active.opening_balance_cents > 0:
+            percent_paid = 100 * (active.opening_balance_cents - active.cached_balance_cents) / active.opening_balance_cents
+
+        active_debt = {
+            "id": active.id,
+            "name": active.name,
+            "balance": active.cached_balance_cents / 100,
+            "percent_paid": percent_paid,
+            "minimum_payment": active.minimum_payment_cents / 100,
+            "payoff_date": payoff_date,
+        }
+
+        # Other debts are remaining in queue
+        for debt in debts[1:]:
+            percent_paid = 0
+            if debt.opening_balance_cents > 0:
+                percent_paid = 100 * (debt.opening_balance_cents - debt.cached_balance_cents) / debt.opening_balance_cents
+
+            other_debts.append({
+                "id": debt.id,
+                "name": debt.name,
+                "balance": debt.cached_balance_cents / 100,
+                "percent_paid": percent_paid,
+            })
 
     return templates.TemplateResponse(
         "debt.html",
         {
             "request": request,
-            "debts": debt_list,
+            "debts": debts,  # For the {% if not debts %} check
+            "active_debt": active_debt,
+            "other_debts": other_debts,
         },
     )
+
+
+@router.get("/debt/{debt_id}/projection", response_class=HTMLResponse)
+def get_debt_projection_view(
+    debt_id: int,
+    request: Request,
+    ctx: AccountContext = Depends(get_account_context),
+) -> str:
+    """
+    Render projection chart for a debt.
+
+    Returns:
+        HTML page with payoff scenario cards and Chart.js visualization
+    """
+    debt = ctx.db.query(DebtAccount).filter_by(
+        id=debt_id,
+        account_id=ctx.account_id
+    ).first()
+
+    if not debt:
+        raise HTTPException(status_code=404, detail="Debt not found")
+
+    minimum = debt.minimum_payment_cents or 0
+    scenarios = []
+
+    for payment_delta_cents, label in [
+        (0, "minimum"),
+        (5000, "+$50"),
+        (10000, "+$100")
+    ]:
+        payment = minimum + payment_delta_cents
+        months, total_interest, payoff_date, payment_gte_interest = project_debt_payoff(
+            opening_balance_cents=debt.cached_balance_cents,
+            interest_rate_bps=debt.interest_rate_bps,
+            monthly_payment_cents=payment,
+            scenario=label
+        )
+
+        # Generate month-by-month balances for chart
+        balance = debt.cached_balance_cents
+        monthly_balances = [balance / 100]
+
+        for _ in range(months):
+            principal, interest = amortize_month(balance, debt.interest_rate_bps, payment)
+            balance -= principal
+            monthly_balances.append(max(0, balance / 100))
+
+        scenarios.append({
+            "name": label,
+            "payment": payment / 100,
+            "months": months,
+            "total_interest": total_interest / 100,
+            "payoff_date": payoff_date,
+            "payment_gte_interest": payment_gte_interest,
+            "monthly_balances": monthly_balances
+        })
+
+    return templates.TemplateResponse(
+        "debt_projection.html",
+        {
+            "request": request,
+            "debt": {"name": debt.name, "id": debt.id},
+            "scenarios": scenarios,
+            "scenarios_json": json.dumps(scenarios),
+        },
+    )
+
+
+@router.get("/api/debt/{debt_id}")
+def get_debt_details(
+    debt_id: int,
+    ctx: AccountContext = Depends(get_account_context),
+) -> dict:
+    """
+    Get debt details as JSON.
+
+    Returns:
+        {
+            "id": id,
+            "name": name,
+            "balance": balance in dollars,
+            "interest_rate": interest rate in percent,
+            "minimum_payment": minimum payment in dollars
+        }
+
+    Raises:
+        404: if debt not found
+    """
+    debt = ctx.db.query(DebtAccount).filter_by(
+        id=debt_id,
+        account_id=ctx.account_id
+    ).first()
+
+    if not debt:
+        raise HTTPException(status_code=404, detail="Debt not found")
+
+    return {
+        "id": debt.id,
+        "name": debt.name,
+        "balance": debt.cached_balance_cents / 100,
+        "interest_rate": debt.interest_rate_bps / 100,
+        "minimum_payment": debt.minimum_payment_cents / 100,
+    }
 
 
 @router.post("/debt/{debt_id}/payment")
@@ -239,12 +373,12 @@ def get_debt_projection(
     minimum = debt.minimum_payment_cents or 0
 
     scenarios = []
-    for payment_delta, label in [
+    for payment_delta_cents, label in [
         (0, "minimum"),
-        (50, "+$50"),
-        (100, "+$100")
+        (5000, "+$50"),
+        (10000, "+$100")
     ]:
-        payment = minimum + payment_delta
+        payment = minimum + payment_delta_cents
         months, total_interest, payoff_date, payment_gte_interest = project_debt_payoff(
             opening_balance_cents=debt.cached_balance_cents,
             interest_rate_bps=debt.interest_rate_bps,

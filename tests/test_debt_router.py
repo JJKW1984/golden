@@ -521,3 +521,64 @@ def test_get_debt_projection_not_found(test_client_http):
     response = test_client_http.get("/api/debt/projection/99999")
 
     assert response.status_code == 404
+
+
+def test_get_debt_projection_view(test_client_http, test_debt_account):
+    """
+    Given: debt with balance 50000 cents
+    When: GET /debt/{id}/projection
+    Then: returns 200 with HTML containing scenario cards and Chart.js
+    """
+    response = test_client_http.get(f"/debt/{test_debt_account.id}/projection")
+
+    assert response.status_code == 200
+    # Check for scenario labels
+    assert "minimum" in response.text
+    assert "+$50" in response.text
+    assert "+$100" in response.text
+    # Check for Chart.js script
+    assert "projectionChart" in response.text
+    # Check for debt name
+    assert test_debt_account.name in response.text
+    # Check for projection view elements
+    assert "Payoff Time" in response.text
+    assert "Total Interest" in response.text
+
+
+def test_get_debt_projection_view_not_found(test_client_http):
+    """
+    Given: nonexistent debt ID
+    When: GET /debt/{id}/projection
+    Then: returns 404
+    """
+    response = test_client_http.get("/debt/99999/projection")
+
+    assert response.status_code == 404
+
+
+def test_get_debt_details(test_client_http, test_debt_account):
+    """
+    Given: debt with balance 50000 cents
+    When: GET /api/debt/{id}
+    Then: returns JSON with debt details
+    """
+    response = test_client_http.get(f"/api/debt/{test_debt_account.id}")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == test_debt_account.id
+    assert data["name"] == test_debt_account.name
+    assert data["balance"] == 500.0  # 50000 cents = $500
+    assert "interest_rate" in data
+    assert "minimum_payment" in data
+
+
+def test_get_debt_details_not_found(test_client_http):
+    """
+    Given: nonexistent debt ID
+    When: GET /api/debt/{id}
+    Then: returns 404
+    """
+    response = test_client_http.get("/api/debt/99999")
+
+    assert response.status_code == 404
