@@ -175,3 +175,78 @@ def get_savings_screen(
             "other_goals": other_goals,
         },
     )
+
+
+@router.get("/assets", response_class=HTMLResponse)
+def get_assets_screen(
+    request: Request,
+    ctx: AccountContext = Depends(get_account_context),
+) -> str:
+    """Asset accounts screen (net worth inputs)."""
+    assets = ctx.db.query(AssetAccount).filter_by(
+        account_id=ctx.account_id, is_active=True
+    ).all()
+
+    return templates.TemplateResponse(
+        "assets.html",
+        {
+            "request": request,
+            "assets": [
+                {"id": a.id, "name": a.name, "balance": a.balance_cents / 100}
+                for a in assets
+            ],
+        },
+    )
+
+
+@router.post("/assets")
+def post_assets(
+    request: AssetAccountRequest,
+    ctx: AccountContext = Depends(get_account_context),
+) -> dict:
+    """Add a new asset account, or update an existing one's balance snapshot."""
+    if request.id is not None:
+        asset = ctx.db.query(AssetAccount).filter_by(
+            id=request.id, account_id=ctx.account_id
+        ).first()
+        if not asset:
+            raise HTTPException(status_code=404, detail="Asset account not found")
+        asset.name = request.name
+        asset.balance_cents = request.balance_cents
+    else:
+        asset = AssetAccount(
+            account_id=ctx.account_id,
+            name=request.name,
+            balance_cents=request.balance_cents,
+        )
+        ctx.db.add(asset)
+
+    ctx.db.commit()
+    ctx.db.refresh(asset)
+
+    return {"id": asset.id, "name": asset.name, "balance_cents": asset.balance_cents}
+
+
+@router.get("/api/networth")
+def get_networth(ctx: AccountContext = Depends(get_account_context)) -> dict:
+    """Net worth summary (spec 9.8). Trend is populated starting Phase 8 monthly snapshots."""
+    from sqlalchemy import func as sa_func
+    from finapp.models import DebtAccount
+    from finapp.services.balances import get_debt_balance_cents
+
+    total_assets = ctx.db.query(sa_func.sum(AssetAccount.balance_cents)).filter(
+        AssetAccount.account_id == ctx.account_id,
+        AssetAccount.is_active == True,
+    ).scalar() or 0
+
+    debts = ctx.db.query(DebtAccount).filter_by(
+        account_id=ctx.account_id, is_active=True
+    ).all()
+    total_debt = sum(get_debt_balance_cents(ctx, d.id) for d in debts)
+
+    return {
+        "net_worth_cents": total_assets - total_debt,
+        "total_assets_cents": total_assets,
+        "total_debt_cents": total_debt,
+        "trend": [],
+    }

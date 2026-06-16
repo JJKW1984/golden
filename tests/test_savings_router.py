@@ -162,3 +162,64 @@ def test_get_savings_screen(test_client, savings_goal):
     assert response.status_code == 200
     assert "Emergency Fund" in response.text
     assert "Vacation" in response.text
+
+
+def test_post_assets_creates_new_asset(test_client):
+    client, db, account_id = test_client
+
+    response = client.post("/assets", json={"name": "Checking", "balance_cents": 250000})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["name"] == "Checking"
+    assert data["balance_cents"] == 250000
+
+    asset = db.query(AssetAccount).filter_by(account_id=account_id, name="Checking").first()
+    assert asset is not None
+    assert asset.balance_cents == 250000
+
+
+def test_post_assets_updates_existing_asset(test_client):
+    client, db, account_id = test_client
+
+    asset = AssetAccount(account_id=account_id, name="Cash", balance_cents=10000)
+    db.add(asset)
+    db.commit()
+    db.refresh(asset)
+
+    response = client.post("/assets", json={"id": asset.id, "name": "Cash", "balance_cents": 15000})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["balance_cents"] == 15000
+
+    db.refresh(asset)
+    assert asset.balance_cents == 15000
+
+
+def test_get_assets_screen(test_client):
+    client, db, account_id = test_client
+
+    db.add(AssetAccount(account_id=account_id, name="Checking", balance_cents=250000))
+    db.commit()
+
+    response = client.get("/assets")
+
+    assert response.status_code == 200
+    assert "Checking" in response.text
+
+
+def test_get_networth(test_client, savings_goal):
+    client, db, account_id = test_client
+
+    db.add(AssetAccount(account_id=account_id, name="Checking", balance_cents=500000))
+    db.commit()
+
+    response = client.get("/api/networth")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total_assets_cents"] == 500000
+    assert data["total_debt_cents"] == 0
+    assert data["net_worth_cents"] == 500000
+    assert data["trend"] == []

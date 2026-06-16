@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Assets{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 space-y-6">
+    <h1 class="text-3xl font-bold">Assets</h1>
+    <p class="text-gray-600">Manually updated balance snapshots, used for your net worth.</p>
+
+    {% if assets %}
+    <div class="space-y-3">
+        {% for asset in assets %}
+        <div class="border rounded-lg p-4 bg-white flex justify-between items-center">
+            <div>
+                <h4 class="font-semibold">{{ asset.name }}</h4>
+                <p class="text-gray-600 text-sm">${{ "%.2f"|format(asset.balance) }}</p>
+            </div>
+            <button class="bg-gray-200 hover:bg-gray-300 px-4 py-1.5 rounded text-sm font-medium text-gray-800"
+                    onclick="openUpdateAssetModal({{ asset.id }}, '{{ asset.name }}', {{ asset.balance }})">
+                Update Balance
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-gray-50 rounded-lg p-8 text-center">
+        <p class="text-gray-600">No asset accounts yet</p>
+    </div>
+    {% endif %}
+
+    <button class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded font-medium"
+            onclick="openAddAssetModal()">
+        Add Asset Account
+    </button>
+</div>
+
+<script>
+function openAddAssetModal() {
+    const name = prompt("Account name (e.g. Checking, Savings, Cash):");
+    if (!name) return;
+    const balance = prompt("Current balance in dollars:");
+    if (!balance) return;
+    fetch('/assets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name, balance_cents: Math.round(parseFloat(balance) * 100) })
+    })
+    .then(r => r.json())
+    .then(() => location.reload())
+    .catch(err => alert('Error: ' + err.message));
+}
+
+function openUpdateAssetModal(id, name, currentBalance) {
+    const balance = prompt(`Update balance for ${name} (current: $${currentBalance.toFixed(2)}):`);
+    if (!balance) return;
+    fetch('/assets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: id, name: name, balance_cents: Math.round(parseFloat(balance) * 100) })
+    })
+    .then(r => r.json())
+    .then(() => location.reload())
+    .catch(err => alert('Error: ' + err.message));
+}
+</script>
+{% endblock %}
