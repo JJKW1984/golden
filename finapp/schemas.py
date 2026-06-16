@@ -345,3 +345,20 @@ class MonthlyReviewCloseRequest(BaseModel):
     period_id: int
     notes: str | None = None
     sweep_to_mission: bool = False
+
+
+class MilestoneDetailResponse(BaseModel):
+    """Full milestone detail for the celebration screen."""
+    id: int
+    milestone_type: str
+    title: str
+    description: str | None
+    celebrated: bool
+
+    class Config:
+        from_attributes = True
+
+
+class MilestoneCelebrateRequest(BaseModel):
+    """Optional 'how does it feel?' response."""
+    feeling: str | None = None
