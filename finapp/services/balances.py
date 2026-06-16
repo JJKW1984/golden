@@ -213,3 +213,50 @@ def get_essentials_target_cents(ctx: AccountContext, period_id: int) -> int:
     """
     from finapp.services.allocation import compute_essentials_target_cents
     return compute_essentials_target_cents(ctx, period_id)
+
+
+def estimate_savings_completion(ctx: AccountContext, goal_id: int) -> tuple[int | None, str | None]:
+    """
+    Estimate months remaining and a target completion date for a savings goal,
+    based on the trailing-90-day average monthly contribution rate.
+
+    Returns (None, None) if the goal is already complete or has no contribution
+    history in the trailing 90 days (nothing to estimate from — calm by design,
+    no guilt copy for "not enough data").
+    """
+    goal = ctx.db.query(SavingsGoal).filter_by(
+        account_id=ctx.account_id, id=goal_id
+    ).first()
+
+    if not goal or goal.is_complete:
+        return (None, None)
+
+    balance = get_savings_goal_balance_cents(ctx, goal_id)
+    remaining = goal.target_cents - balance
+    if remaining <= 0:
+        return (None, None)
+
+    today = date.today()
+    cutoff_date = today - timedelta(days=90)
+
+    contributions = ctx.db.query(Transaction).filter(
+        Transaction.account_id == ctx.account_id,
+        Transaction.link_type == "savings",
+        Transaction.link_id == goal_id,
+        Transaction.direction == "out",
+        Transaction.date >= cutoff_date,
+        Transaction.is_deleted == False,
+    ).all()
+
+    total_contributed = sum(t.amount_cents for t in contributions)
+    if total_contributed <= 0:
+        return (None, None)
+
+    avg_monthly_cents = total_contributed // 3  # trailing-90-day window ~= 3 months
+    if avg_monthly_cents <= 0:
+        return (None, None)
+
+    months = -(-remaining // avg_monthly_cents)  # ceiling division
+    est_date = (today + timedelta(days=30 * months)).isoformat()
+
+    return (months, est_date)

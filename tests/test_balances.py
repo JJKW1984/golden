@@ -20,6 +20,7 @@ from finapp.services.balances import (
     get_savings_goal_balance_cents,
     get_net_worth_cents,
     get_days_of_expenses_coverage,
+    estimate_savings_completion,
 )
 from finapp.services.ledger import create_transaction
 
@@ -422,3 +423,55 @@ class TestDaysOfExpensesCoverage:
         days, estimated = get_days_of_expenses_coverage(ctx, goal.id)
         assert days == 0
         assert estimated is True
+
+
+class TestEstimateSavingsCompletion:
+    """Test estimated completion date for an in-progress savings goal (calm-by-design: no guilt, just an estimate)."""
+
+    def test_no_contribution_history_returns_none(self, db, ctx, setup_account):
+        account, period = setup_account
+        goal = SavingsGoal(
+            account_id=account.id, name="Vacation", goal_type="sinking_fund",
+            target_cents=100000, opening_balance_cents=0, cached_balance_cents=0,
+        )
+        db.add(goal)
+        db.commit()
+
+        months, est_date = estimate_savings_completion(ctx, goal.id)
+        assert months is None
+        assert est_date is None
+
+    def test_already_complete_returns_none(self, db, ctx, setup_account):
+        account, period = setup_account
+        goal = SavingsGoal(
+            account_id=account.id, name="Vacation", goal_type="sinking_fund",
+            target_cents=10000, opening_balance_cents=10000, cached_balance_cents=10000,
+            is_complete=True,
+        )
+        db.add(goal)
+        db.commit()
+
+        months, est_date = estimate_savings_completion(ctx, goal.id)
+        assert months is None
+        assert est_date is None
+
+    def test_estimates_from_trailing_90_day_contribution_rate(self, db, ctx, setup_account):
+        account, period = setup_account
+        goal = SavingsGoal(
+            account_id=account.id, name="Vacation", goal_type="sinking_fund",
+            target_cents=100000, opening_balance_cents=0, cached_balance_cents=0,
+        )
+        db.add(goal)
+        db.commit()
+
+        # 3 contributions of $100 each over the trailing 90 days -> $300 / 3 months = $100/month avg
+        for i, day in enumerate([date(2026, 4, 15), date(2026, 5, 15), date(2026, 6, 15)]):
+            create_transaction(ctx, date=day, amount_cents=10000,
+                                direction="out", link_type="savings", link_id=goal.id)
+        db.commit()
+
+        months, est_date = estimate_savings_completion(ctx, goal.id)
+
+        # Remaining = 100000 - 30000 = 70000 cents; avg monthly = 10000 cents -> 7 months
+        assert months == 7
+        assert est_date is not None
