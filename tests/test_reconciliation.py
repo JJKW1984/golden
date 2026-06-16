@@ -17,6 +17,7 @@ from finapp.services.reconciliation import (
     compute_debt_balance_cents,
     compute_savings_goal_balance_cents,
     recompute_balances,
+    apply_recomputed_balances,
 )
 from finapp.services.seeds import seed_default_categories
 
@@ -490,3 +491,73 @@ def test_recompute_balances_property_zero_drift(db, account, seed_value):
     for goal in goals:
         derived_balance = compute_savings_goal_balance_cents(db, account.id, goal.id)
         assert derived_balance >= 0
+
+
+class TestSavingsGoalCompletion:
+    """Test that apply_recomputed_balances flips is_complete/completed_at (spec-derived flag)."""
+
+    def test_goal_marked_complete_when_balance_reaches_target(self, db, ctx, populated_account):
+        account, period = populated_account
+        goal = SavingsGoal(
+            account_id=account.id,
+            name="Emergency Fund",
+            goal_type="emergency_fund",
+            target_cents=100000,
+            opening_balance_cents=100000,
+            cached_balance_cents=0,
+            is_complete=False,
+            completed_at=None,
+        )
+        db.add(goal)
+        db.commit()
+
+        apply_recomputed_balances(db, account.id)
+        db.refresh(goal)
+
+        assert goal.cached_balance_cents == 100000  # opening balance only, no transactions
+        assert goal.is_complete is True
+        assert goal.completed_at is not None
+
+    def test_goal_not_marked_complete_when_balance_below_target(self, db, ctx, populated_account):
+        account, period = populated_account
+        goal = SavingsGoal(
+            account_id=account.id,
+            name="Vacation",
+            goal_type="custom",
+            target_cents=100000,
+            opening_balance_cents=50000,
+            cached_balance_cents=0,
+            is_complete=False,
+            completed_at=None,
+        )
+        db.add(goal)
+        db.commit()
+
+        apply_recomputed_balances(db, account.id)
+        db.refresh(goal)
+
+        assert goal.cached_balance_cents == 50000
+        assert goal.is_complete is False
+        assert goal.completed_at is None
+
+    def test_completed_at_not_overwritten_once_set(self, db, ctx, populated_account):
+        """If a goal is already marked complete, re-running reconciliation must not change completed_at."""
+        account, period = populated_account
+        goal = SavingsGoal(
+            account_id=account.id,
+            name="Emergency Fund",
+            goal_type="emergency_fund",
+            target_cents=100000,
+            opening_balance_cents=100000,
+            cached_balance_cents=100000,
+            is_complete=True,
+            completed_at=datetime(2026, 1, 1, 12, 0, 0),
+        )
+        db.add(goal)
+        db.commit()
+
+        apply_recomputed_balances(db, account.id)
+        db.refresh(goal)
+
+        assert goal.is_complete is True
+        assert goal.completed_at == datetime(2026, 1, 1, 12, 0, 0)

@@ -197,6 +197,9 @@ def apply_recomputed_balances(db: Session, account_id: int) -> dict:
     for goal in goals:
         derived = compute_savings_goal_balance_cents(db, account_id, goal.id)
         goal.cached_balance_cents = derived
+        if not goal.is_complete and derived >= goal.target_cents:
+            goal.is_complete = True
+            goal.completed_at = datetime.utcnow()
 
     db.commit()
 
