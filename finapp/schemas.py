@@ -332,3 +332,16 @@ class MissionProgressResponse(BaseModel):
 class MissionReorderRequest(BaseModel):
     """Request to reorder the mission queue."""
     ordered_ids: list[int]
+
+
+class WeeklyReviewCompleteRequest(BaseModel):
+    """Request to complete the weekly review."""
+    intention: str | None = None
+    quick: bool = False
+
+
+class MonthlyReviewCloseRequest(BaseModel):
+    """Request to close the monthly period (Monthly Reset)."""
+    period_id: int
+    notes: str | None = None
+    sweep_to_mission: bool = False
