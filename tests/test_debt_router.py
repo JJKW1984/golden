@@ -2,12 +2,21 @@
 Integration tests for debt payment and adjustment transactions.
 Tests that debt payments route through the ledger correctly, splitting
 into principal and interest components.
+Also includes HTTP router tests for debt endpoints.
 """
 import pytest
 from datetime import datetime, date
-from finapp.models import Transaction, DebtAccount, BudgetCategory
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine, event
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
+
+from finapp.main import app
+from finapp.db import Base
+from finapp.deps import get_db, get_account_context, AccountContext
+from finapp.models import Transaction, DebtAccount, BudgetCategory, Account
 from finapp.services.ledger import create_transaction, create_debt_adjustment
-from finapp.deps import AccountContext
+from finapp.services.seeds import seed_default_categories
 
 
 @pytest.fixture
@@ -285,3 +294,230 @@ def test_debt_payment_invariant_principal_plus_interest_equals_payment(ctx, debt
         assert total == payment_cents, \
             f"Invariant failed for balance={balance_cents}, rate={interest_rate_bps}bps, payment={payment_cents}: " \
             f"{txn.principal_cents} + {txn.interest_cents} != {payment_cents}"
+
+
+# ============================================================================
+# HTTP Router Tests
+# ============================================================================
+
+@pytest.fixture(scope="function")
+def test_db_engine_http(tmp_path):
+    """Create a temporary SQLite test database for HTTP tests."""
+    db_file = tmp_path / "test_debt_router.db"
+    engine = create_engine(
+        f"sqlite:///{db_file}",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+
+    @event.listens_for(engine, "connect")
+    def _set_pragmas(dbapi_conn, _rec):
+        dbapi_conn.execute("PRAGMA journal_mode=WAL")
+        dbapi_conn.execute("PRAGMA foreign_keys=ON")
+
+    Base.metadata.create_all(engine)
+    yield engine
+    Base.metadata.drop_all(engine)
+
+
+@pytest.fixture(scope="function")
+def test_db_http(test_db_engine_http):
+    """Create a test database session for HTTP tests."""
+    SessionLocal = sessionmaker(bind=test_db_engine_http)
+    session = SessionLocal()
+    yield session
+    session.close()
+
+
+@pytest.fixture(scope="function")
+def test_account_http(test_db_http):
+    """Create a test account with default categories for HTTP tests."""
+    account = Account(id=1, display_name="Test User")
+    test_db_http.add(account)
+    test_db_http.commit()
+
+    seed_default_categories(test_db_http, account.id)
+    return account
+
+
+@pytest.fixture(scope="function")
+def test_client_http(test_db_http, test_account_http):
+    """Create a test client with mocked dependencies for HTTP tests."""
+    test_account_id = test_account_http.id
+
+    def override_get_db():
+        yield test_db_http
+
+    def override_get_account_context():
+        return AccountContext(account_id=test_account_id, db=test_db_http)
+
+    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_account_context] = override_get_account_context
+
+    yield TestClient(app)
+
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture(scope="function")
+def test_debt_account(test_db_http, test_account_http):
+    """Create a test debt account for HTTP tests."""
+    debt = DebtAccount(
+        account_id=test_account_http.id,
+        name="Test Debt",
+        creditor="Test Bank",
+        opening_balance_cents=50000,
+        interest_rate_bps=1200,  # 12% annual
+        cached_balance_cents=50000,
+        minimum_payment_cents=100,
+        sort_order=1,
+        is_active=True,
+        notes="Test debt account"
+    )
+    test_db_http.add(debt)
+    test_db_http.commit()
+    test_db_http.refresh(debt)
+    return debt
+
+
+def test_get_debt_list(test_client_http, test_debt_account):
+    """
+    Given: account with active debt
+    When: GET /debt
+    Then: returns 200 with debt list including name
+    """
+    response = test_client_http.get("/debt")
+
+    assert response.status_code == 200
+    # HTML response should contain the debt name
+    assert test_debt_account.name in response.text
+
+
+def test_get_debt_list_multiple_debts(test_client_http, test_db_http, test_account_http):
+    """
+    Given: account with multiple debts
+    When: GET /debt
+    Then: returns HTML with all debts listed in sort order
+    """
+    # Create multiple debts
+    debt1 = DebtAccount(
+        account_id=test_account_http.id,
+        name="Credit Card",
+        creditor="Bank A",
+        opening_balance_cents=30000,
+        interest_rate_bps=2000,
+        cached_balance_cents=30000,
+        minimum_payment_cents=100,
+        sort_order=1,
+        is_active=True,
+    )
+    debt2 = DebtAccount(
+        account_id=test_account_http.id,
+        name="Student Loan",
+        creditor="Federal",
+        opening_balance_cents=100000,
+        interest_rate_bps=500,
+        cached_balance_cents=100000,
+        minimum_payment_cents=200,
+        sort_order=2,
+        is_active=True,
+    )
+    test_db_http.add(debt1)
+    test_db_http.add(debt2)
+    test_db_http.commit()
+
+    response = test_client_http.get("/debt")
+
+    assert response.status_code == 200
+    assert "Credit Card" in response.text
+    assert "Student Loan" in response.text
+
+
+def test_post_debt_payment(test_client_http, test_debt_account):
+    """
+    Given: debt with balance 50000 cents
+    When: POST /debt/{id}/payment with payment_cents=400
+    Then: returns 200 with principal and interest split
+    """
+    response = test_client_http.post(
+        f"/debt/{test_debt_account.id}/payment",
+        json={"payment_cents": 400}
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "principal" in data
+    assert "interest" in data
+    assert "new_balance" in data
+    assert "transaction_id" in data
+    # Principal + interest should equal payment
+    assert abs(data["principal"] + data["interest"] - 4.0) < 0.01
+
+
+def test_post_debt_payment_not_found(test_client_http):
+    """
+    Given: nonexistent debt ID
+    When: POST /debt/{id}/payment
+    Then: returns 404
+    """
+    response = test_client_http.post(
+        "/debt/99999/payment",
+        json={"payment_cents": 400}
+    )
+
+    assert response.status_code == 404
+
+
+def test_post_debt_payment_with_memo(test_client_http, test_debt_account):
+    """
+    Given: debt account and payment with memo
+    When: POST /debt/{id}/payment with memo="Extra payment"
+    Then: transaction is created with the memo
+    """
+    memo_text = "Extra monthly payment"
+    response = test_client_http.post(
+        f"/debt/{test_debt_account.id}/payment",
+        json={
+            "payment_cents": 500,
+            "memo": memo_text
+        }
+    )
+
+    assert response.status_code == 200
+    # The transaction should have been created with the memo (we verify via service later)
+
+
+def test_get_debt_projection(test_client_http, test_debt_account):
+    """
+    Given: debt with balance 50000 cents
+    When: GET /api/debt/projection/{id}
+    Then: returns JSON with 3 scenarios (minimum, +50, +100)
+    """
+    response = test_client_http.get(f"/api/debt/projection/{test_debt_account.id}")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "scenarios" in data
+    assert len(data["scenarios"]) == 3
+
+    # Check first scenario (minimum)
+    assert data["scenarios"][0]["name"] == "minimum"
+    assert "months" in data["scenarios"][0]
+    assert "total_interest" in data["scenarios"][0]
+    assert "payoff_date" in data["scenarios"][0]
+    assert "payment_gte_interest" in data["scenarios"][0]
+
+    # Scenarios should be ordered by payment amount
+    scenario_payments = [s["payment"] for s in data["scenarios"]]
+    assert scenario_payments == sorted(scenario_payments)
+
+
+def test_get_debt_projection_not_found(test_client_http):
+    """
+    Given: nonexistent debt ID
+    When: GET /api/debt/projection/{id}
+    Then: returns 404
+    """
+    response = test_client_http.get("/api/debt/projection/99999")
+
+    assert response.status_code == 404

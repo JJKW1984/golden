@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Debt{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">Debt</h1>
+
+    {% if debts %}
+    <div class="grid grid-cols-1 gap-4">
+        {% for debt in debts %}
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h2 class="text-xl font-semibold">{{ debt.name }}</h2>
+                    <p class="text-sm text-gray-600">{{ debt.creditor }}</p>
+                </div>
+                <div class="text-right">
+                    <div class="text-2xl font-bold">${{ "%.2f"|format(debt.balance) }}</div>
+                    <div class="text-sm text-gray-600">{{ "%.2f"|format(debt.interest_rate) }}% APR</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div class="bg-gray-50 p-3 rounded">
+                    <div class="text-sm text-gray-600">Minimum Payment</div>
+                    <div class="font-semibold">${{ "%.2f"|format(debt.minimum_payment) }}</div>
+                </div>
+                <div class="bg-blue-50 p-3 rounded">
+                    <div class="text-sm text-gray-600">Balance</div>
+                    <div class="font-semibold">${{ "%.2f"|format(debt.balance) }}</div>
+                </div>
+            </div>
+
+            <div class="flex gap-2">
+                <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm"
+                        onclick="openPaymentModal({{ debt.id }})">
+                    Make Payment
+                </button>
+                <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded text-sm"
+                        onclick="openProjectionModal({{ debt.id }})">
+                    View Projection
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-gray-50 rounded-lg p-8 text-center">
+        <p class="text-gray-600">No active debts</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function openPaymentModal(debtId) {
+    // Placeholder for payment modal
+    const amount = prompt("Enter payment amount in dollars:");
+    if (amount) {
+        fetch(`/debt/${debtId}/payment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                payment_cents: Math.round(parseFloat(amount) * 100)
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
+            alert(`Payment recorded: $${data.principal.toFixed(2)} principal, $${data.interest.toFixed(2)} interest`);
+            location.reload();
+        })
+        .catch(err => alert('Error: ' + err.message));
+    }
+}
+
+function openProjectionModal(debtId) {
+    fetch(`/api/debt/projection/${debtId}`)
+    .then(r => r.json())
+    .then(data => {
+        let msg = 'Payoff Scenarios:\n\n';
+        data.scenarios.forEach(s => {
+            msg += `${s.name} ($${s.payment.toFixed(2)}/mo):\n`;
+            msg += `  ${s.months} months, $${s.total_interest.toFixed(2)} interest\n`;
+            msg += `  Payoff date: ${s.payoff_date}\n\n`;
+        });
+        alert(msg);
+    })
+    .catch(err => alert('Error: ' + err.message));
+}
+</script>
+{% endblock %}
