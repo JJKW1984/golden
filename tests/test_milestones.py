@@ -46,3 +46,62 @@ def test_different_link_id_creates_separate_milestone(db, ctx):
     assert second is not None
     fetched = db.query(Milestone).filter_by(account_id=ctx.account_id).all()
     assert len(fetched) == 2
+
+
+from datetime import date
+from finapp.models import DebtAccount, SavingsGoal
+from finapp.services.ledger import create_transaction
+from finapp.services.reconciliation import apply_recomputed_balances
+
+
+def test_debt_paid_off_milestone_fires_once(db, ctx):
+    debt = DebtAccount(
+        account_id=ctx.account_id, name="Capital One", opening_balance_cents=10000,
+        cached_balance_cents=10000, interest_rate_bps=0, minimum_payment_cents=1000,
+    )
+    db.add(debt)
+    db.commit()
+
+    create_transaction(
+        ctx, date=date.today(), amount_cents=10000, direction="out",
+        link_type="debt", link_id=debt.id, principal_cents=10000, interest_cents=0,
+    )
+
+    from finapp.models import Milestone
+    milestones = db.query(Milestone).filter_by(
+        account_id=ctx.account_id, milestone_type="debt_paid_off", link_id=debt.id,
+    ).all()
+    assert len(milestones) == 1
+
+    # A second recompute must not duplicate it
+    apply_recomputed_balances(db, ctx.account_id)
+    milestones = db.query(Milestone).filter_by(
+        account_id=ctx.account_id, milestone_type="debt_paid_off", link_id=debt.id,
+    ).all()
+    assert len(milestones) == 1
+
+
+def test_savings_goal_reached_milestone_fires_once(db, ctx):
+    goal = SavingsGoal(
+        account_id=ctx.account_id, name="Emergency Fund", goal_type="emergency_fund",
+        target_cents=5000, opening_balance_cents=0, cached_balance_cents=0,
+    )
+    db.add(goal)
+    db.commit()
+
+    create_transaction(
+        ctx, date=date.today(), amount_cents=5000, direction="out",
+        link_type="savings", link_id=goal.id,
+    )
+
+    from finapp.models import Milestone
+    milestones = db.query(Milestone).filter_by(
+        account_id=ctx.account_id, milestone_type="savings_goal_reached", link_id=goal.id,
+    ).all()
+    assert len(milestones) == 1
+
+    apply_recomputed_balances(db, ctx.account_id)
+    milestones = db.query(Milestone).filter_by(
+        account_id=ctx.account_id, milestone_type="savings_goal_reached", link_id=goal.id,
+    ).all()
+    assert len(milestones) == 1

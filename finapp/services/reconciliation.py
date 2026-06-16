@@ -178,8 +178,16 @@ def apply_recomputed_balances(db: Session, account_id: int) -> dict:
     """
     Rebuild all cached balances and UPDATE them in the database.
     Used after transaction writes to keep caches fresh.
+    Fires debt_paid_off / savings_goal_reached milestones the moment a
+    balance crosses into its completed state (idempotent via
+    services/milestones.py).
     Returns the drift report.
     """
+    from finapp.deps import AccountContext
+    from finapp.services.milestones import create_milestone_if_new
+
+    ctx = AccountContext(account_id=account_id, db=db)
+
     # Update BudgetPeriod.income_received_cents
     periods = db.query(BudgetPeriod).filter_by(account_id=account_id).all()
     for period in periods:
@@ -191,15 +199,33 @@ def apply_recomputed_balances(db: Session, account_id: int) -> dict:
     for debt in debts:
         derived = compute_debt_balance_cents(db, account_id, debt.id)
         debt.cached_balance_cents = derived
+        if derived == 0 and debt.paid_off_at is None:
+            debt.paid_off_at = datetime.utcnow()
+            create_milestone_if_new(
+                ctx,
+                milestone_type="debt_paid_off",
+                title=f"{debt.name} paid off!",
+                description=f"You paid off {debt.name}.",
+                link_type="debt",
+                link_id=debt.id,
+            )
 
     # Update SavingsGoal.cached_balance_cents
     goals = db.query(SavingsGoal).filter_by(account_id=account_id).all()
     for goal in goals:
         derived = compute_savings_goal_balance_cents(db, account_id, goal.id)
         goal.cached_balance_cents = derived
-        if not goal.is_complete and derived >= goal.target_cents:
+        if not goal.is_complete and derived >= goal.target_cents and goal.target_cents > 0:
             goal.is_complete = True
             goal.completed_at = datetime.utcnow()
+            create_milestone_if_new(
+                ctx,
+                milestone_type="savings_goal_reached",
+                title=f"{goal.name} goal reached!",
+                description=f"You reached your {goal.name} goal.",
+                link_type="savings",
+                link_id=goal.id,
+            )
 
     db.commit()
 
