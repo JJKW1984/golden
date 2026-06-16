@@ -1,0 +1,24 @@
+finapp/models.py
+  s_7ae786d310027e::t_f598457c743c45 254-271
+  s_7ae786d310027e::t_705ab4a8600eb3 26
+alembic/versions/f2a19aaf069f_add_net_worth_snapshots.py
+  s_7ae786d310027e::t_c5963cb63d3bf8 1-42
+tests/test_balances.py
+  s_7ae786d310027e::t_4c82f311e75196 478-496
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "fbe39283bae028318e7e9e7b433778178438d767",
+  "prompts": {},
+  "sessions": {
+    "s_7ae786d310027e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dc6ee771-54f0-480c-b36d-93eca732eaa4",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    }
+  }
+}
