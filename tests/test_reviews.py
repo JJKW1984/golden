@@ -70,3 +70,67 @@ def test_review_streak_counts_consecutive_completed_weeks(db, ctx, account):
 
     streak = get_review_streak(ctx)
     assert streak == 3
+
+
+from finapp.models import DebtAccount, NetWorthSnapshot, Milestone
+from finapp.services.reviews import (
+    get_monthly_reset_data, close_month, start_month_shortcut,
+)
+
+
+def _make_period(db, ctx, year, month, status="active"):
+    period = BudgetPeriod(account_id=ctx.account_id, year=year, month=month, status=status)
+    db.add(period)
+    db.commit()
+    return period
+
+
+def test_close_month_marks_period_closed_and_creates_next(db, ctx, account, tmp_path, monkeypatch):
+    monkeypatch.setattr("finapp.services.reviews.BACKUPS_DIR", str(tmp_path / "backups"))
+    monkeypatch.setattr("finapp.services.reviews.SOURCE_DB_PATH", str(tmp_path / "finance.db"))
+    import sqlite3
+    sqlite3.connect(str(tmp_path / "finance.db")).close()
+
+    period = _make_period(db, ctx, 2026, 5)
+
+    result = close_month(ctx, period_id=period.id, notes="Good month.", sweep_to_mission=False)
+
+    db.refresh(period)
+    assert period.status == "closed"
+    assert period.closed_at is not None
+    assert period.notes == "Good month."
+    assert result["reconciliation"]["total_drift"] == 0
+    assert os.path.exists(result["backup_path"])
+
+    snapshot = db.query(NetWorthSnapshot).filter_by(
+        account_id=ctx.account_id, year=2026, month=5,
+    ).first()
+    assert snapshot is not None
+
+
+def test_close_month_creates_two_snapshots_for_two_months(db, ctx, account, tmp_path, monkeypatch):
+    monkeypatch.setattr("finapp.services.reviews.BACKUPS_DIR", str(tmp_path / "backups"))
+    monkeypatch.setattr("finapp.services.reviews.SOURCE_DB_PATH", str(tmp_path / "finance.db"))
+    import sqlite3
+    sqlite3.connect(str(tmp_path / "finance.db")).close()
+
+    period = _make_period(db, ctx, 2026, 5)
+    result1 = close_month(ctx, period_id=period.id, notes=None, sweep_to_mission=False)
+
+    # close_month auto-creates June; use the returned next_period_id
+    period2 = db.query(BudgetPeriod).filter_by(
+        account_id=ctx.account_id, id=result1["next_period_id"]
+    ).first()
+    close_month(ctx, period_id=period2.id, notes=None, sweep_to_mission=False)
+
+    snapshots = db.query(NetWorthSnapshot).filter_by(account_id=ctx.account_id).all()
+    assert len(snapshots) == 2
+
+
+def test_start_month_shortcut_creates_period_if_missing(db, ctx, account):
+    period = start_month_shortcut(ctx)
+    assert period.year == date.today().year
+    assert period.month == date.today().month
+
+    again = start_month_shortcut(ctx)
+    assert again.id == period.id
