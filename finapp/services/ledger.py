@@ -260,10 +260,15 @@ def create_debt_adjustment(
     Used when reconciling a debt account's cached balance with the statement balance.
     Creates a special transaction with:
     - link_type='debt', link_id=debt_id
-    - principal_cents=adjustment_cents (negative if balance was overstated)
+    - principal_cents=-adjustment_cents (negated to make the balance math work)
     - interest_cents=0 (adjustments have no interest component)
     - mood_tag=None (adjustments don't get mood tags)
     - kind='adjustment'
+
+    The principal_cents is NEGATED because:
+    - If adjustment_cents = -2000 (balance was overstated by $20)
+    - We need total_principal to increase by 2000 to account for the error
+    - So principal_cents = -(-2000) = 2000
 
     Args:
         ctx: AccountContext for account scoping
@@ -272,7 +277,7 @@ def create_debt_adjustment(
         statement_balance_cents: the correct balance per statement
 
     Returns:
-        Transaction created with link_type='debt', principal_cents=adjustment_cents, interest_cents=0
+        Transaction created with link_type='debt', principal_cents=-adjustment_cents, interest_cents=0
     """
     debt = ctx.db.query(DebtAccount).filter_by(
         id=debt_id, account_id=ctx.account_id
@@ -288,6 +293,12 @@ def create_debt_adjustment(
     # Direction is "out" if adjustment negative (balance was overstated, increasing the debt)
     direction = "in" if adjustment_cents > 0 else "out"
 
+    # CRITICAL: principal_cents must be NEGATED
+    # The reconciliation formula is: derived_balance = opening_balance - total_principal
+    # If adjustment_cents = -2000 (we were $20 over), we need total_principal to go UP by 2000
+    # So principal_cents = -(-2000) = 2000
+    principal_for_ledger = -adjustment_cents
+
     txn = Transaction(
         account_id=ctx.account_id,
         period_id=period.id,
@@ -300,7 +311,7 @@ def create_debt_adjustment(
         mood_tag=None,
         link_type="debt",
         link_id=debt_id,
-        principal_cents=adjustment_cents,
+        principal_cents=principal_for_ledger,
         interest_cents=0,
         is_imported=False,
         import_hash=None,

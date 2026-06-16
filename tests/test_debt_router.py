@@ -173,7 +173,7 @@ def test_create_debt_adjustment_transaction(ctx, debt_account, db):
     When: create_debt_adjustment(..., adjustment_cents=-2000) is called
     Then: creates a Transaction with:
     - link_type='debt', link_id=debt_id
-    - principal_cents=-2000 (negative because balance decreased)
+    - principal_cents=2000 (negated: -(-2000) to make balance math work)
     - interest_cents=0 (adjustments have no interest component)
     - memo contains "Update balance"
     """
@@ -191,8 +191,9 @@ def test_create_debt_adjustment_transaction(ctx, debt_account, db):
     # Verify adjustment properties
     assert txn.link_type == "debt", f"Expected link_type='debt', got {txn.link_type}"
     assert txn.link_id == debt_account.id, f"Expected link_id={debt_account.id}, got {txn.link_id}"
-    assert txn.principal_cents == adjustment_cents, \
-        f"Expected principal={adjustment_cents}, got {txn.principal_cents}"
+    # principal_cents is negated: if adjustment_cents=-2000, principal_cents=2000
+    assert txn.principal_cents == -adjustment_cents, \
+        f"Expected principal={-adjustment_cents}, got {txn.principal_cents}"
     assert txn.interest_cents == 0, f"Expected interest=0 for adjustment, got {txn.interest_cents}"
     assert txn.mood_tag is None, f"Expected mood_tag=None, got {txn.mood_tag}"
     assert "Update balance" in txn.memo or "adjustment" in txn.memo.lower(), \
@@ -206,7 +207,7 @@ def test_create_debt_adjustment_positive_adjustment(ctx, debt_account):
     Given: a debt account with cached_balance 50000 cents, actual balance 51000 cents
     When: create_debt_adjustment(..., adjustment_cents=1000) is called
     Then: creates a Transaction with:
-    - principal_cents=1000 (positive, balance was understated)
+    - principal_cents=-1000 (negated: -(1000) to make balance math work)
     - direction='in' (money "coming in" to pay debt, reducing it)
     """
     adjustment_cents = 1000  # Balance was $10 understated
@@ -220,7 +221,8 @@ def test_create_debt_adjustment_positive_adjustment(ctx, debt_account):
     )
 
     # Verify positive adjustment
-    assert txn.principal_cents == adjustment_cents
+    # principal_cents is negated: if adjustment_cents=1000, principal_cents=-1000
+    assert txn.principal_cents == -adjustment_cents
     assert txn.interest_cents == 0
     assert txn.direction == "in", f"Expected direction='in' for positive adjustment, got {txn.direction}"
     assert txn.amount_cents == abs(adjustment_cents)
@@ -231,7 +233,7 @@ def test_create_debt_adjustment_negative_adjustment(ctx, debt_account):
     Given: a debt account with cached_balance 50000 cents, actual balance 48000 cents
     When: create_debt_adjustment(..., adjustment_cents=-2000) is called
     Then: creates a Transaction with:
-    - principal_cents=-2000 (negative)
+    - principal_cents=2000 (negated: -(-2000) to make balance math work)
     - direction='out' (balance increased, debt grew)
     """
     adjustment_cents = -2000  # Balance was $20 overstated
@@ -245,7 +247,8 @@ def test_create_debt_adjustment_negative_adjustment(ctx, debt_account):
     )
 
     # Verify negative adjustment
-    assert txn.principal_cents == adjustment_cents
+    # principal_cents is negated: if adjustment_cents=-2000, principal_cents=2000
+    assert txn.principal_cents == -adjustment_cents
     assert txn.interest_cents == 0
     assert txn.direction == "out", f"Expected direction='out' for negative adjustment, got {txn.direction}"
     assert txn.amount_cents == abs(adjustment_cents)
@@ -582,3 +585,55 @@ def test_get_debt_details_not_found(test_client_http):
     response = test_client_http.get("/api/debt/99999")
 
     assert response.status_code == 404
+
+
+def test_post_debt_adjustment(test_client_http, test_debt_account):
+    """
+    Given: debt with cached balance 50000 cents, statement says 48000 cents
+    When: POST /debt/{id}/adjustment with statement_balance_cents=48000
+    Then: creates adjustment transaction and updates cached_balance
+    """
+    # Verify initial balance
+    assert test_debt_account.cached_balance_cents == 50000
+
+    response = test_client_http.post(
+        f"/debt/{test_debt_account.id}/adjustment",
+        json={"statement_balance_cents": 48000, "adjustment_cents": -2000}
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["new_balance"] == 480.0  # 48000 / 100
+    assert data["adjustment"] == -20.0   # -2000 / 100
+    assert "transaction_id" in data
+
+
+def test_post_debt_adjustment_not_found(test_client_http):
+    """
+    Given: nonexistent debt ID
+    When: POST /debt/{id}/adjustment
+    Then: returns 404
+    """
+    response = test_client_http.post(
+        "/debt/99999/adjustment",
+        json={"statement_balance_cents": 48000, "adjustment_cents": -2000}
+    )
+
+    assert response.status_code == 404
+
+
+def test_post_debt_adjustment_positive(test_client_http, test_debt_account):
+    """
+    Given: debt with cached balance 50000 cents, statement says 51000 cents (positive adjustment)
+    When: POST /debt/{id}/adjustment with statement_balance_cents=51000
+    Then: creates adjustment transaction and updates cached_balance
+    """
+    response = test_client_http.post(
+        f"/debt/{test_debt_account.id}/adjustment",
+        json={"statement_balance_cents": 51000, "adjustment_cents": 1000}
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["new_balance"] == 510.0  # 51000 / 100
+    assert data["adjustment"] == 10.0     # 1000 / 100
