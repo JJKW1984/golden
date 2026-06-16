@@ -16,7 +16,7 @@
                 <p class="text-gray-600 text-sm">${{ "%.2f"|format(asset.balance) }}</p>
             </div>
             <button class="bg-gray-200 hover:bg-gray-300 px-4 py-1.5 rounded text-sm font-medium text-gray-800"
-                    onclick="openUpdateAssetModal({{ asset.id }}, '{{ asset.name }}', {{ asset.balance }})">
+                    onclick="openUpdateAssetModal({{ asset.id|tojson }}, {{ asset.name|tojson }}, {{ asset.balance|tojson }})">
                 Update Balance
             </button>
         </div>
