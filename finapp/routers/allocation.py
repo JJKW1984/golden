@@ -75,7 +75,10 @@ def set_targets(
 ) -> AllocationRitualResponse:
     """
     Set allocation targets for a period (allocation ritual).
+    Fires the first_budget milestone the first time this account ever sets any allocation.
     """
+    from finapp.services.milestones import create_milestone_if_new
+
     period = ctx.db.query(BudgetPeriod).filter_by(
         id=request.period_id, account_id=ctx.account_id
     ).first()
@@ -83,10 +86,22 @@ def set_targets(
     if not period:
         raise HTTPException(status_code=404, detail="Period not found")
 
+    is_first_ever = ctx.db.query(BudgetAllocation).filter_by(
+        account_id=ctx.account_id
+    ).count() == 0
+
     # Convert request format {category_id: target_cents}
     targets = {item["category_id"]: item["target_cents"] for item in request.allocations}
 
     set_allocation_targets(ctx, period_id=request.period_id, category_targets=targets)
+
+    if is_first_ever:
+        create_milestone_if_new(
+            ctx,
+            milestone_type="first_budget",
+            title="Your first budget!",
+            description="You set targets for your first month.",
+        )
 
     # Build response
     categories = {

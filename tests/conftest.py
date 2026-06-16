@@ -1,6 +1,7 @@
 import pytest
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 from finapp.db import Base
 from finapp.deps import AccountContext
 from finapp.models import Account
@@ -8,14 +9,16 @@ from finapp.models import Account
 
 @pytest.fixture(scope="function")
 def db_engine():
+    # StaticPool ensures all threads (including TestClient worker threads) share
+    # the same in-memory SQLite connection — necessary because in-memory SQLite
+    # creates a fresh empty database for each new connection.
     engine = create_engine(
         "sqlite:///:memory:",
         connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
     )
-    # Enable WAL and foreign keys for in-memory test DB
     with engine.connect() as conn:
-        conn.execute(__import__('sqlalchemy').text("PRAGMA journal_mode=WAL"))
-        conn.execute(__import__('sqlalchemy').text("PRAGMA foreign_keys=ON"))
+        conn.execute(text("PRAGMA foreign_keys=ON"))
     Base.metadata.create_all(engine)
     yield engine
     Base.metadata.drop_all(engine)

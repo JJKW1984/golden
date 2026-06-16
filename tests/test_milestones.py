@@ -105,3 +105,42 @@ def test_savings_goal_reached_milestone_fires_once(db, ctx):
         account_id=ctx.account_id, milestone_type="savings_goal_reached", link_id=goal.id,
     ).all()
     assert len(milestones) == 1
+
+
+def test_first_budget_milestone_fires_on_first_allocation_router_call(
+    test_client_for_budget,
+):
+    from finapp.models import BudgetCategory, BudgetPeriod, Milestone
+    from finapp.main import app
+    from finapp.deps import get_db
+
+    client = test_client_for_budget
+    db = next(app.dependency_overrides[get_db]())
+
+    period = BudgetPeriod(account_id=1, year=2026, month=6, income_received_cents=0)
+    db.add(period)
+    db.commit()
+    cat = BudgetCategory(account_id=1, name="Food", kind="spending")
+    db.add(cat)
+    db.commit()
+
+    resp = client.post("/api/allocation/targets", json={
+        "period_id": period.id,
+        "allocations": [{"category_id": cat.id, "target_cents": 1000}],
+    })
+    assert resp.status_code == 200
+
+    milestones = db.query(Milestone).filter_by(
+        account_id=1, milestone_type="first_budget",
+    ).all()
+    assert len(milestones) == 1
+
+    # A second allocation call must not duplicate it
+    client.post("/api/allocation/targets", json={
+        "period_id": period.id,
+        "allocations": [{"category_id": cat.id, "target_cents": 2000}],
+    })
+    milestones = db.query(Milestone).filter_by(
+        account_id=1, milestone_type="first_budget",
+    ).all()
+    assert len(milestones) == 1
