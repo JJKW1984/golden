@@ -1,0 +1,21 @@
+finapp/services/reviews.py
+  s_7ae786d310027e::t_e2b3d7083eaa30 1-271
+tests/test_reviews.py
+  s_7ae786d310027e::t_afa70a62fb5501 1-72
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "4de71fb7f6ef981e1f1416f5a6ea4329dfab397c",
+  "prompts": {},
+  "sessions": {
+    "s_7ae786d310027e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dc6ee771-54f0-480c-b36d-93eca732eaa4",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    }
+  }
+}
