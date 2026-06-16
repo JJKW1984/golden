@@ -1,0 +1,21 @@
+finapp/services/backup.py
+  s_7ae786d310027e::t_bac59775491e65 1-31
+tests/test_backup.py
+  s_7ae786d310027e::t_0fe1f5c1692c55 1-50
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "0efb58d12b75367f9113cf87e0e1759d41d26dc7",
+  "prompts": {},
+  "sessions": {
+    "s_7ae786d310027e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dc6ee771-54f0-480c-b36d-93eca732eaa4",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    }
+  }
+}
