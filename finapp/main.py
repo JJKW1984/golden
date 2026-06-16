@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from finapp.routers import allocation, dashboard, budget, transactions, debt
+from finapp.routers import allocation, dashboard, budget, transactions, debt, savings
 
 app = FastAPI(title="Personal Finance App")
 
@@ -14,6 +14,7 @@ app.include_router(dashboard.router)
 app.include_router(budget.router)
 app.include_router(transactions.router)
 app.include_router(debt.router)
+app.include_router(savings.router)
 
 
 @app.get("/health")
