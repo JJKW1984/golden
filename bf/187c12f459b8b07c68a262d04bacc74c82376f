@@ -1,0 +1,21 @@
+tests/test_milestones.py
+  s_7ae786d310027e::t_89de8013c282dc 1-48
+finapp/services/milestones.py
+  s_7ae786d310027e::t_cb4b26f6392312 1-54
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "bf187c12f459b8b07c68a262d04bacc74c82376f",
+  "prompts": {},
+  "sessions": {
+    "s_7ae786d310027e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dc6ee771-54f0-480c-b36d-93eca732eaa4",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    }
+  }
+}
