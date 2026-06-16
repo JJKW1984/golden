@@ -23,6 +23,7 @@ class Account(Base):
     reviews = relationship("Review", back_populates="account", cascade="all, delete-orphan")
     milestones = relationship("Milestone", back_populates="account", cascade="all, delete-orphan")
     asset_accounts = relationship("AssetAccount", back_populates="account", cascade="all, delete-orphan")
+    net_worth_snapshots = relationship("NetWorthSnapshot", back_populates="account", cascade="all, delete-orphan")
 
 
 class Settings(Base):
@@ -250,3 +251,21 @@ class AssetAccount(Base):
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     account = relationship("Account", back_populates="asset_accounts")
+
+
+class NetWorthSnapshot(Base):
+    __tablename__ = "net_worth_snapshots"
+    __table_args__ = (
+        UniqueConstraint("account_id", "year", "month", name="uq_networth_account_year_month"),
+    )
+
+    id = Column(Integer, primary_key=True)
+    account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False)
+    year = Column(Integer, nullable=False)
+    month = Column(Integer, nullable=False)
+    net_worth_cents = Column(Integer, nullable=False)
+    total_assets_cents = Column(Integer, nullable=False)
+    total_debt_cents = Column(Integer, nullable=False)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    account = relationship("Account", back_populates="net_worth_snapshots")

@@ -475,3 +475,22 @@ class TestEstimateSavingsCompletion:
         # Remaining = 100000 - 30000 = 70000 cents; avg monthly = 10000 cents -> 7 months
         assert months == 7
         assert est_date is not None
+
+
+def test_net_worth_snapshot_model_round_trip(db, ctx):
+    from finapp.models import NetWorthSnapshot
+    snap = NetWorthSnapshot(
+        account_id=ctx.account_id,
+        year=2026,
+        month=6,
+        net_worth_cents=500000,
+        total_assets_cents=800000,
+        total_debt_cents=300000,
+    )
+    db.add(snap)
+    db.commit()
+
+    fetched = db.query(NetWorthSnapshot).filter_by(account_id=ctx.account_id).first()
+    assert fetched.net_worth_cents == 500000
+    assert fetched.year == 2026
+    assert fetched.month == 6
