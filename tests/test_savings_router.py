@@ -197,6 +197,14 @@ def test_post_assets_updates_existing_asset(test_client):
     assert asset.balance_cents == 15000
 
 
+def test_post_assets_update_nonexistent_asset_404s(test_client):
+    client, db, account_id = test_client
+
+    response = client.post("/assets", json={"id": 9999, "name": "Ghost", "balance_cents": 100000})
+
+    assert response.status_code == 404
+
+
 def test_get_assets_screen(test_client):
     client, db, account_id = test_client
 
