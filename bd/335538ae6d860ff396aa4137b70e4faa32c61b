@@ -1,0 +1,23 @@
+tests/test_milestones.py
+  s_7ae786d310027e::t_16069f59fe7a01 108-146
+finapp/routers/allocation.py
+  s_7ae786d310027e::t_6838adb93f5edf 78,80-81,89-92,98-104
+tests/conftest.py
+  s_7ae786d310027e::t_4d5e81b55cada2 2,4,12-14,18,21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "bd335538ae6d860ff396aa4137b70e4faa32c61b",
+  "prompts": {},
+  "sessions": {
+    "s_7ae786d310027e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dc6ee771-54f0-480c-b36d-93eca732eaa4",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    }
+  }
+}
