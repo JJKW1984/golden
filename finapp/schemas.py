@@ -124,3 +124,112 @@ class DashboardResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# Phase 5: Budget & Transactions
+
+class TransactionRequest(BaseModel):
+    """Request to create or update a transaction."""
+    date: date
+    amount_cents: int
+    direction: str = "out"  # 'in' or 'out'
+    category_id: int
+    payee: str | None = None
+    memo: str | None = None
+    mood_tag: str | None = None  # 'planned', 'impulse', 'stress', 'celebration', 'necessity'
+
+
+class TransactionResponse(BaseModel):
+    """Response model for a transaction."""
+    id: int
+    date: date
+    amount_cents: int
+    direction: str
+    category_id: int
+    category_name: str
+    payee: str | None
+    memo: str | None
+    mood_tag: str | None
+    link_type: str | None  # 'debt', 'savings', or None
+    link_id: int | None
+    is_deleted: bool
+    created_at: str
+    updated_at: str
+
+    class Config:
+        from_attributes = True
+
+
+class BudgetTableRowResponse(BaseModel):
+    """Single row in the budget table."""
+    category_id: int
+    category_name: str
+    target_cents: int
+    funded_cents: int
+    spent_cents: int
+    remaining_cents: int
+    is_overspent: bool  # remaining_cents < 0
+
+    class Config:
+        from_attributes = True
+
+
+class BudgetSummaryResponse(BaseModel):
+    """Budget data for a single period (Screen 2)."""
+    period_id: int
+    year: int
+    month: int
+    income_received_cents: int
+    total_target_cents: int
+    total_funded_cents: int
+    total_spent_cents: int
+    total_remaining_cents: int
+    unallocated_cents: int
+    is_zero_based: bool
+    categories: list[BudgetTableRowResponse]
+
+    class Config:
+        from_attributes = True
+
+
+class BudgetHistoryPeriodResponse(BaseModel):
+    """Summary of a past period (for history tab)."""
+    period_id: int
+    year: int
+    month: int
+    income_received_cents: int
+    total_spent_cents: int
+    total_target_cents: int
+
+    class Config:
+        from_attributes = True
+
+
+class OverageDetectionResponse(BaseModel):
+    """Response when an overage is detected after expense logging."""
+    overage_amount_cents: int
+    overage_category_id: int
+    overage_category_name: str
+    available_categories: list[BudgetTableRowResponse]  # Categories with headroom, sorted by headroom descending
+
+    class Config:
+        from_attributes = True
+
+
+class BudgetReallocateRequest(BaseModel):
+    """Request to move funds between budget allocations."""
+    period_id: int
+    from_category_id: int
+    to_category_id: int
+    amount_cents: int
+
+
+class BudgetReallocateResponse(BaseModel):
+    """Response after reallocation."""
+    from_allocation_id: int
+    to_allocation_id: int
+    from_target_cents: int
+    to_target_cents: int
+
+    class Config:
+        from_attributes = True

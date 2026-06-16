@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Budget{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">Budget</h1>
+
+    {% if current_summary %}
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <h2 class="text-2xl font-semibold mb-4">Month {{ current_summary.month }}/{{ current_summary.year }}</h2>
+
+        <div class="grid grid-cols-4 gap-4 mb-6">
+            <div class="bg-blue-50 p-4 rounded">
+                <div class="text-sm text-gray-600">Income</div>
+                <div class="text-2xl font-bold">${{ (current_summary.income_received_cents / 100) | round(2) }}</div>
+            </div>
+            <div class="bg-green-50 p-4 rounded">
+                <div class="text-sm text-gray-600">Allocated</div>
+                <div class="text-2xl font-bold">${{ (current_summary.total_target_cents / 100) | round(2) }}</div>
+            </div>
+            <div class="bg-orange-50 p-4 rounded">
+                <div class="text-sm text-gray-600">Spent</div>
+                <div class="text-2xl font-bold">${{ (current_summary.total_spent_cents / 100) | round(2) }}</div>
+            </div>
+            <div class="bg-purple-50 p-4 rounded">
+                <div class="text-sm text-gray-600">Remaining</div>
+                <div class="text-2xl font-bold">${{ (current_summary.total_remaining_cents / 100) | round(2) }}</div>
+            </div>
+        </div>
+
+        {% if current_summary.categories %}
+        <table class="w-full text-left">
+            <thead>
+                <tr class="border-b">
+                    <th class="py-2">Category</th>
+                    <th class="py-2 text-right">Target</th>
+                    <th class="py-2 text-right">Spent</th>
+                    <th class="py-2 text-right">Remaining</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cat in current_summary.categories %}
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="py-2">{{ cat.category_name }}</td>
+                    <td class="py-2 text-right">${{ (cat.target_cents / 100) | round(2) }}</td>
+                    <td class="py-2 text-right">${{ (cat.spent_cents / 100) | round(2) }}</td>
+                    <td class="py-2 text-right {% if cat.is_overspent %}text-red-600 font-bold{% endif %}">${{ (cat.remaining_cents / 100) | round(2) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

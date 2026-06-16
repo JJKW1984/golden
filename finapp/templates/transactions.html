@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Transactions - Personal Finance App{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Transactions</h1>
+        <p class="text-gray-600 mt-2">View and manage your transactions</p>
+    </div>
+
+    <!-- Filters Panel -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Filters</h2>
+        <form method="get" action="/transactions" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <!-- Category Filter -->
+            <div>
+                <label for="category_id" class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <select id="category_id" name="category_id" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                    <option value="">All Categories</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if selected_category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Mood Tag Filter -->
+            <div>
+                <label for="mood_tag" class="block text-sm font-medium text-gray-700 mb-1">Mood Tag</label>
+                <select id="mood_tag" name="mood_tag" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                    <option value="">All Tags</option>
+                    <option value="necessity" {% if selected_mood_tag == "necessity" %}selected{% endif %}>Necessity</option>
+                    <option value="impulse" {% if selected_mood_tag == "impulse" %}selected{% endif %}>Impulse</option>
+                    <option value="planned" {% if selected_mood_tag == "planned" %}selected{% endif %}>Planned</option>
+                    <option value="stress" {% if selected_mood_tag == "stress" %}selected{% endif %}>Stress</option>
+                    <option value="celebration" {% if selected_mood_tag == "celebration" %}selected{% endif %}>Celebration</option>
+                </select>
+            </div>
+
+            <!-- Start Date -->
+            <div>
+                <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                <input type="date" id="start_date" name="start_date" value="{{ start_date or '' }}" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+            </div>
+
+            <!-- End Date -->
+            <div>
+                <label for="end_date" class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                <input type="date" id="end_date" name="end_date" value="{{ end_date or '' }}" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+            </div>
+
+            <!-- Filter Button -->
+            <div class="flex items-end">
+                <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700">
+                    Apply Filters
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Transactions Table -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Date</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Payee</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Category</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Memo</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Mood</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">Amount</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% if transactions %}
+                    {% for txn in transactions %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 text-sm text-gray-900">{{ txn.date }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-900">{{ txn.payee or "-" }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-900">{{ txn.category_name }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-600">{{ txn.memo or "-" }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-600">{{ txn.mood_tag or "-" }}</td>
+                            <td class="px-6 py-4 text-sm text-right font-medium {% if txn.direction == 'out' %}text-red-600{% else %}text-green-600{% endif %}">
+                                {% if txn.direction == 'out' %}-{% endif %}${{ (txn.amount_cents / 100)|round(2) }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                            No transactions found. Create one to get started.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+{% endblock %}
