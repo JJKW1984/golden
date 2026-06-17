@@ -10,7 +10,6 @@ Validates that:
 
 Spec: docs/superpowers/specs/2026-06-17-ui-design-system.md
 """
-import os
 import pytest
 from pathlib import Path
 
