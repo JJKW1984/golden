@@ -1,0 +1,43 @@
+finapp/templates/debt.html
+  s_0408dc2041213c::t_9836d0181a2a10 81
+finapp/services/dashboard.py
+  s_0408dc2041213c::t_0b9aa5ffb93a62 17-20,243-244,246,251-254
+tests/test_dashboard.py
+  s_0408dc2041213c::t_0b9aa5ffb93a62 422-461
+finapp/templates/debt_projection.html
+  s_0408dc2041213c::t_9836d0181a2a10 35
+finapp/templates/base.html
+  s_0408dc2041213c::t_9836d0181a2a10 147,263-264,289
+tests/test_reviews.py
+  s_0408dc2041213c::t_0b9aa5ffb93a62 76,80-121
+  s_0408dc2041213c::t_5ebfdb86eb9117 5,77-79
+finapp/templates/transactions.html
+  s_0408dc2041213c::t_8f1e0be4d88ff5 85
+  s_0408dc2041213c::t_9836d0181a2a10 93-98
+finapp/services/reviews.py
+  s_0408dc2041213c::t_0b9aa5ffb93a62 86
+finapp/templates/dashboard.html
+  s_0408dc2041213c::t_9836d0181a2a10 15,20,57-60,67-68,72,74-75,79,86-87,92-94,96
+finapp/templates/savings.html
+  s_0408dc2041213c::t_9836d0181a2a10 85
+finapp/templates/assets.html
+  s_0408dc2041213c::t_9836d0181a2a10 27
+finapp/templates/budget.html
+  s_0408dc2041213c::t_9836d0181a2a10 26,48,55-59
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "121cea401834c5fc49f14f29f301cc3c06862f23",
+  "prompts": {},
+  "sessions": {
+    "s_0408dc2041213c": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d642a25c-beeb-4a14-ac3c-e7bbd9868762",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    }
+  }
+}
