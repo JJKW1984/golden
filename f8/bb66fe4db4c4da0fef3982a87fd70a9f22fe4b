@@ -1,0 +1,19 @@
+docs/superpowers/plans/2026-06-17-ui-design-system-foundation.md
+  s_a1d100bcfbafd4::t_04a38295185ba5 1-319
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "f8bb66fe4db4c4da0fef3982a87fd70a9f22fe4b",
+  "prompts": {},
+  "sessions": {
+    "s_a1d100bcfbafd4": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "71fac276-3abd-47fa-a2f6-8c9e681f66b7",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    }
+  }
+}
