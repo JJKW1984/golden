@@ -1,3 +1,3 @@
 @echo off
-python finapp/run.py
+uv run python finapp/run.py
 pause

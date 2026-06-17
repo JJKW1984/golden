@@ -114,29 +114,38 @@ See `docs/implementation_plan_v2.md` for phase map (0–11) and detailed Done ga
 ## Common Commands
 
 ```bash
+# Install all deps (creates .venv automatically)
+uv sync
+
 # Run the app (alembic migrate + start server + open browser)
-python run.py
+uv run python finapp/run.py
 
 # Or on Windows
 start.bat
 
 # Run tests (unit + integration)
-pytest
+uv run pytest tests/
 
 # Run a single test
-pytest tests/test_money.py -v
+uv run pytest tests/test_money.py -v
 
 # Lint
-flake8 finapp/ --max-line-length=100
+uv run flake8 finapp/ --max-line-length=100
+
+# Add a production dependency
+uv add <package>
+
+# Add a dev/test dependency
+uv add --dev <package>
 
 # Alembic: create migration
-alembic revision --autogenerate -m "description"
+uv run alembic revision --autogenerate -m "description"
 
 # Alembic: apply migrations
-alembic upgrade head
+uv run alembic upgrade head
 
 # Alembic: rollback
-alembic downgrade -1
+uv run alembic downgrade -1
 ```
 
 ## Data Correctness & Testing
