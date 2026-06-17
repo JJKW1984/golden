@@ -137,6 +137,14 @@ class TestOverageAvailableCategories:
                           category_id=categories["Housing"])  # $450 spent of $500 (headroom: $50)
         create_transaction(ctx, date=date(2026, 6, 5), amount_cents=10000, direction="out",
                           category_id=categories["Food"])  # $100 spent of $200 (headroom: $100)
+        # Spend the remaining funded categories to zero headroom so only
+        # Food and Housing are left with headroom.
+        create_transaction(ctx, date=date(2026, 6, 5), amount_cents=15000, direction="out",
+                          category_id=categories["Transportation"])  # $150 of $150 (headroom: $0)
+        create_transaction(ctx, date=date(2026, 6, 5), amount_cents=10000, direction="out",
+                          category_id=categories["Debt"])  # $100 of $100 (headroom: $0)
+        create_transaction(ctx, date=date(2026, 6, 5), amount_cents=5000, direction="out",
+                          category_id=categories["Emergency Fund"])  # $50 of $50 (headroom: $0)
 
         allocations = ctx.db.query(BudgetAllocation).filter_by(
             account_id=ctx.account_id, period_id=period.id

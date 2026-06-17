@@ -128,22 +128,33 @@ class TestGreeting:
 class TestDateFormatting:
     """Test the date formatting component."""
 
-    def test_date_format_includes_day_of_week(self, db, ctx, setup_account):
-        """Date is formatted as 'Monday, June 14'."""
+    def test_date_format_includes_day_of_week(self, db, ctx, setup_account, monkeypatch):
+        """Date is formatted as 'Sunday, June 14'."""
         from finapp.services.dashboard import get_dashboard_data
+        from datetime import date
 
+        class MockDate(date):
+            @classmethod
+            def today(cls):
+                return date(2026, 6, 14)
+
+        monkeypatch.setattr("finapp.services.dashboard.date", MockDate)
         data = get_dashboard_data(ctx)
-        # June 14, 2026 is a Sunday (we can verify based on calculation)
         assert "June 14" in data["date"]
-        # Should include day of week name
         assert data["date"][0].isalpha()  # Starts with day name
 
-    def test_date_includes_month_and_day(self, db, ctx, setup_account):
+    def test_date_includes_month_and_day(self, db, ctx, setup_account, monkeypatch):
         """Date includes full month name and numeric day."""
         from finapp.services.dashboard import get_dashboard_data
+        from datetime import date
 
+        class MockDate(date):
+            @classmethod
+            def today(cls):
+                return date(2026, 6, 14)
+
+        monkeypatch.setattr("finapp.services.dashboard.date", MockDate)
         data = get_dashboard_data(ctx)
-        # Should contain month and day
         assert any(month in data["date"] for month in [
             "January", "February", "March", "April", "May", "June",
             "July", "August", "September", "October", "November", "December"

@@ -5,7 +5,7 @@ Tests full user journeys like: log income → allocate → spend → reallocate 
 import pytest
 from datetime import date
 from finapp.deps import AccountContext
-from finapp.models import BudgetCategory, BudgetPeriod, BudgetAllocation
+from finapp.models import BudgetCategory, BudgetPeriod, BudgetAllocation, Transaction
 from finapp.services.seeds import seed_default_categories
 from finapp.services.ledger import create_transaction
 from finapp.services.allocation import (
@@ -70,15 +70,15 @@ class TestBudgetAllocationFlow:
             ctx,
             period_id=period.id,
             category_targets={
-                categories["Housing"]: 100000,       # $1,000
-                categories["Food"]: 40000,           # $400
+                categories["Housing"]: 80000,        # $800
+                categories["Food"]: 30000,           # $300
                 categories["Transportation"]: 25000, # $250
                 categories["Debt"]: 35000,           # $350
                 categories["Emergency Fund"]: 10000, # $100
-                categories["Personal"]: 15000,       # $150
-                categories["Everything Else"]: 15000, # $150
+                categories["Personal"]: 10000,       # $100
+                categories["Everything Else"]: 10000, # $100
             },
-        )
+        )  # Totals $2,000 — matches income
 
         # Step 3: Check zero-based
         unallocated = compute_unallocated_cents(ctx, period_id=period.id)
@@ -225,16 +225,13 @@ class TestExpenseLoggingFlow:
 
         assert txn.mood_tag == "necessity"
 
-        # Verify it can be filtered
-        necessity_txns = ctx.db.query(BudgetAllocation.__table__.c).filter(
-            # Find by mood tag
-        ).all()
-
-        # Simple verification: transaction exists with the tag
-        txn = ctx.db.query(BudgetAllocation.__class__.__bases__[0]).filter_by(
-            mood_tag="necessity"
+        # Verify it can be filtered by mood tag
+        necessity_txn = ctx.db.query(Transaction).filter_by(
+            account_id=ctx.account_id,
+            mood_tag="necessity",
         ).first()
-        # Mood tag filtering will be tested in router tests
+        assert necessity_txn is not None
+        assert necessity_txn.mood_tag == "necessity"
 
 
 class TestOverageReallocationFlow:
@@ -380,7 +377,7 @@ class TestTransactionDeletionAndUndo:
         ctx.db.commit()
 
         # Verify it's marked deleted
-        txn = ctx.db.query(BudgetAllocation.__class__).filter_by(
+        txn = ctx.db.query(Transaction).filter_by(
             id=txn.id
         ).first()
         assert txn.is_deleted is True
@@ -412,7 +409,7 @@ class TestTransactionDeletionAndUndo:
         ctx.db.commit()
 
         # Verify it's restored
-        txn = ctx.db.query(BudgetAllocation.__class__).filter_by(
+        txn = ctx.db.query(Transaction).filter_by(
             id=txn.id
         ).first()
         assert txn.is_deleted is False
