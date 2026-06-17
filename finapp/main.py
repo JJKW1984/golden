@@ -2,13 +2,14 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from finapp.routers import allocation, dashboard, budget, transactions, debt, savings, missions, reviews, milestones
+from finapp.routers import allocation, dashboard, budget, transactions, debt, savings, missions, reviews, milestones, onboarding
 
 app = FastAPI(title="Personal Finance App")
 
 templates = Jinja2Templates(directory="finapp/templates")
 
 # Register routers
+app.include_router(onboarding.router)
 app.include_router(allocation.router)
 app.include_router(dashboard.router)
 app.include_router(budget.router)

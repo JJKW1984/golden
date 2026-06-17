@@ -362,3 +362,46 @@ class MilestoneDetailResponse(BaseModel):
 class MilestoneCelebrateRequest(BaseModel):
     """Optional 'how does it feel?' response."""
     feeling: str | None = None
+
+
+# --- Onboarding (Phase 9) ----------------------------------------------------
+# Money arrives as display strings (dollars / percent) and is converted to
+# cents / basis points at this HTTP boundary, per the money-discipline rule.
+
+class OnboardingSettingsRequest(BaseModel):
+    """Step 1 & 2: welcome name + income setup."""
+    user_name: str
+    monthly_income: str  # dollars, e.g. "4000.00"
+    pay_frequency: str  # 'monthly' | 'biweekly' | 'weekly'
+    pay_day: int
+    hourly_wage: str | None = None  # dollars; feature disabled in v1
+
+
+class OnboardingCategoriesRequest(BaseModel):
+    """Step 3: rename, add (1-3), and hide categories."""
+    renames: dict[int, str] = {}
+    additions: list[str] = []
+    hidden_ids: list[int] = []
+
+
+class OnboardingDebtItem(BaseModel):
+    """A single debt account entered during onboarding."""
+    name: str
+    balance: str  # dollars
+    interest_rate: str  # percent, e.g. "21.99"
+    minimum_payment: str  # dollars
+    creditor: str | None = None
+
+
+class OnboardingDebtRequest(BaseModel):
+    """Step 4: debt setup. method has NO default — the user chooses."""
+    has_debt: str = "no"  # 'yes' | 'no' | 'not_yet'
+    method: str | None = None  # 'snowball' | 'avalanche'
+    debts: list[OnboardingDebtItem] = []
+
+
+class OnboardingSavingsRequest(BaseModel):
+    """Step 5: emergency fund current balance + target."""
+    has_savings: bool = False
+    current_balance: str = "0"  # dollars
+    target: str  # dollars

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Welcome — Personal Finance App</title>
+    <script src="https://cdn.tailwindcss.com" integrity="sha384-ZOxlONqYT8A/gUxhJkXJP2pC2wqaX4yWvC4u6hLZwl3MFjL2YqDvXfS4t2Rq4nNd" crossorigin="anonymous"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" integrity="sha384-nVDQlWJywQyB56zNON36OfWJM0l6w1wHfM2OqsNUC8kxpGR/VhknP0rhjKSmvAv4M" crossorigin="anonymous"></script>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen">
+<div class="max-w-xl mx-auto px-4 py-10" x-data="onboarding()">
+
+    <!-- Progress indicator -->
+    <div class="flex items-center justify-between mb-8">
+        <template x-for="n in 6" :key="n">
+            <div class="flex-1 mx-1">
+                <div class="h-2 rounded-full"
+                     :class="n <= step ? 'bg-teal-500' : 'bg-gray-200'"></div>
+            </div>
+        </template>
+    </div>
+    <p class="text-sm text-gray-500 mb-6">Step <span x-text="step"></span> of 6</p>
+
+    <!-- Step 1: Welcome -->
+    <section x-show="step === 1">
+        <h1 class="text-2xl font-bold mb-2">Welcome</h1>
+        <p class="text-gray-600 mb-6">This app will help you rebuild — one day at a time.</p>
+        <label class="block text-sm font-medium mb-2">What should we call you?</label>
+        <input x-model="form.user_name" type="text" class="w-full px-4 py-2 border rounded-lg mb-6" placeholder="Your name" />
+        <button @click="step = 2" class="w-full bg-teal-600 text-white py-3 rounded-lg font-medium">Get started</button>
+    </section>
+
+    <!-- Step 2: Income -->
+    <section x-show="step === 2">
+        <h1 class="text-2xl font-bold mb-4">Income setup</h1>
+        <label class="block text-sm font-medium mb-2">Monthly take-home (after tax)</label>
+        <input x-model="form.monthly_income" type="text" inputmode="decimal" class="w-full px-4 py-2 border rounded-lg mb-4" placeholder="0.00" />
+        <label class="block text-sm font-medium mb-2">Pay frequency</label>
+        <select x-model="form.pay_frequency" class="w-full px-4 py-2 border rounded-lg mb-4">
+            <option value="monthly">Monthly</option>
+            <option value="biweekly">Every two weeks</option>
+            <option value="weekly">Weekly</option>
+        </select>
+        <label class="block text-sm font-medium mb-2">Pay day (day of month)</label>
+        <input x-model.number="form.pay_day" type="number" min="1" max="31" class="w-full px-4 py-2 border rounded-lg mb-6" />
+        <div class="flex gap-2">
+            <button @click="step = 1" class="flex-1 border py-3 rounded-lg">Back</button>
+            <button @click="saveSettings()" class="flex-1 bg-teal-600 text-white py-3 rounded-lg font-medium">Continue</button>
+        </div>
+    </section>
+
+    <!-- Step 3: Categories -->
+    <section x-show="step === 3">
+        <h1 class="text-2xl font-bold mb-2">Budget categories</h1>
+        <p class="text-gray-600 mb-6">We'll set dollar amounts next. For now, just confirm these buckets fit your life.</p>
+        <div class="space-y-2 mb-4">
+            {% for c in categories %}
+            <div class="flex items-center gap-2">
+                <span class="w-6 text-center">{{ c.emoji or "" }}</span>
+                <input type="text" value="{{ c.name }}" data-cat-id="{{ c.id }}" class="cat-name flex-1 px-3 py-2 border rounded-lg" />
+                {% if c.is_system %}
+                <span class="text-xs text-gray-400 px-2">locked</span>
+                {% else %}
+                <label class="text-xs text-gray-500 flex items-center gap-1">
+                    <input type="checkbox" class="cat-hide" data-cat-id="{{ c.id }}" /> hide
+                </label>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        <label class="block text-sm font-medium mb-2">Add a category (optional)</label>
+        <input id="cat-add" type="text" class="w-full px-4 py-2 border rounded-lg mb-6" placeholder="e.g. Pets" />
+        <div class="flex gap-2">
+            <button @click="step = 2" class="flex-1 border py-3 rounded-lg">Back</button>
+            <button @click="saveCategories()" class="flex-1 bg-teal-600 text-white py-3 rounded-lg font-medium">Continue</button>
+        </div>
+    </section>
+
+    <!-- Step 4: Debt -->
+    <section x-show="step === 4">
+        <h1 class="text-2xl font-bold mb-4">Debt</h1>
+        <p class="text-gray-600 mb-4">Do you have any debt you want to pay off?</p>
+        <div class="flex gap-2 mb-4">
+            <button @click="form.has_debt='no'" :class="form.has_debt==='no' ? 'bg-teal-600 text-white' : 'border'" class="flex-1 py-2 rounded-lg">No</button>
+            <button @click="form.has_debt='not_yet'" :class="form.has_debt==='not_yet' ? 'bg-teal-600 text-white' : 'border'" class="flex-1 py-2 rounded-lg">Not yet</button>
+            <button @click="form.has_debt='yes'" :class="form.has_debt==='yes' ? 'bg-teal-600 text-white' : 'border'" class="flex-1 py-2 rounded-lg">Yes</button>
+        </div>
+
+        <template x-if="form.has_debt === 'yes'">
+            <div>
+                <template x-for="(d, i) in form.debts" :key="i">
+                    <div class="grid grid-cols-2 gap-2 mb-2 border rounded-lg p-3">
+                        <input x-model="d.name" placeholder="Name" class="px-3 py-2 border rounded col-span-2" />
+                        <input x-model="d.balance" placeholder="Balance" inputmode="decimal" class="px-3 py-2 border rounded" />
+                        <input x-model="d.interest_rate" placeholder="Rate %" inputmode="decimal" class="px-3 py-2 border rounded" />
+                        <input x-model="d.minimum_payment" placeholder="Min payment" inputmode="decimal" class="px-3 py-2 border rounded col-span-2" />
+                    </div>
+                </template>
+                <button @click="form.debts.push({name:'',balance:'',interest_rate:'',minimum_payment:''})" class="text-teal-600 text-sm mb-4">+ Add a debt</button>
+
+                <p class="text-gray-600 mb-2 mt-2">Which payoff approach fits you?</p>
+                <div class="flex gap-2 mb-6">
+                    <button @click="form.method='snowball'" :class="form.method==='snowball' ? 'bg-teal-600 text-white' : 'border'" class="flex-1 py-2 rounded-lg text-sm">Snowball<br><span class="text-xs">smallest first</span></button>
+                    <button @click="form.method='avalanche'" :class="form.method==='avalanche' ? 'bg-teal-600 text-white' : 'border'" class="flex-1 py-2 rounded-lg text-sm">Avalanche<br><span class="text-xs">highest rate first</span></button>
+                </div>
+            </div>
+        </template>
+
+        <div class="flex gap-2">
+            <button @click="step = 3" class="flex-1 border py-3 rounded-lg">Back</button>
+            <button @click="saveDebt()" class="flex-1 bg-teal-600 text-white py-3 rounded-lg font-medium">Continue</button>
+        </div>
+    </section>
+
+    <!-- Step 5: Emergency fund -->
+    <section x-show="step === 5">
+        <h1 class="text-2xl font-bold mb-4">Emergency fund</h1>
+        <p class="text-gray-600 mb-4">Do you have emergency savings?</p>
+        <div class="flex gap-2 mb-4">
+            <button @click="form.has_savings=false" :class="!form.has_savings ? 'bg-teal-600 text-white' : 'border'" class="flex-1 py-2 rounded-lg">No</button>
+            <button @click="form.has_savings=true" :class="form.has_savings ? 'bg-teal-600 text-white' : 'border'" class="flex-1 py-2 rounded-lg">Yes</button>
+        </div>
+        <template x-if="form.has_savings">
+            <div>
+                <label class="block text-sm font-medium mb-2">Current balance</label>
+                <input x-model="form.current_balance" type="text" inputmode="decimal" class="w-full px-4 py-2 border rounded-lg mb-4" placeholder="0.00" />
+            </div>
+        </template>
+        <label class="block text-sm font-medium mb-2">Target</label>
+        <div class="flex gap-2 mb-4">
+            <button @click="form.target='500'" class="flex-1 border py-2 rounded-lg">$500</button>
+            <button @click="form.target='1000'" class="flex-1 border py-2 rounded-lg">$1,000</button>
+        </div>
+        <input x-model="form.target" type="text" inputmode="decimal" class="w-full px-4 py-2 border rounded-lg mb-6" placeholder="Custom target" />
+        <div class="flex gap-2">
+            <button @click="step = 4" class="flex-1 border py-3 rounded-lg">Back</button>
+            <button @click="saveSavings()" class="flex-1 bg-teal-600 text-white py-3 rounded-lg font-medium">Continue</button>
+        </div>
+    </section>
+
+    <!-- Step 6: Mission queue -->
+    <section x-show="step === 6">
+        <h1 class="text-2xl font-bold mb-2">Your mission queue</h1>
+        <p class="text-gray-600 mb-6">We've lined up your goals in a sensible order. You can reorder them anytime.</p>
+        <button @click="finish()" class="w-full bg-teal-600 text-white py-3 rounded-lg font-medium">Finish setup</button>
+    </section>
+</div>
+
+<script>
+function onboarding() {
+    return {
+        step: 1,
+        form: {
+            user_name: "{{ settings.user_name or '' }}",
+            monthly_income: "",
+            pay_frequency: "monthly",
+            pay_day: 1,
+            has_debt: "no",
+            method: null,
+            debts: [{name:'',balance:'',interest_rate:'',minimum_payment:''}],
+            has_savings: false,
+            current_balance: "",
+            target: "1000",
+        },
+        async post(url, body) {
+            const r = await fetch(url, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(body),
+            });
+            if (!r.ok) throw new Error(await r.text());
+            return r.json();
+        },
+        async saveSettings() {
+            await this.post("/onboarding/settings", {
+                user_name: this.form.user_name || "Friend",
+                monthly_income: this.form.monthly_income || "0",
+                pay_frequency: this.form.pay_frequency,
+                pay_day: this.form.pay_day || 1,
+            });
+            this.step = 3;
+        },
+        async saveCategories() {
+            const renames = {};
+            document.querySelectorAll(".cat-name").forEach(el => {
+                renames[el.dataset.catId] = el.value;
+            });
+            const hidden_ids = [];
+            document.querySelectorAll(".cat-hide:checked").forEach(el => {
+                hidden_ids.push(parseInt(el.dataset.catId));
+            });
+            const add = document.getElementById("cat-add").value.trim();
+            const additions = add ? [add] : [];
+            await this.post("/onboarding/categories", {renames, additions, hidden_ids});
+            this.step = 4;
+        },
+        async saveDebt() {
+            const debts = this.form.has_debt === "yes"
+                ? this.form.debts.filter(d => d.name && d.balance) : [];
+            await this.post("/onboarding/debt", {
+                has_debt: this.form.has_debt,
+                method: this.form.method,
+                debts: debts,
+            });
+            this.step = 5;
+        },
+        async saveSavings() {
+            await this.post("/onboarding/savings", {
+                has_savings: this.form.has_savings,
+                current_balance: this.form.current_balance || "0",
+                target: this.form.target || "1000",
+            });
+            this.step = 6;
+        },
+        async finish() {
+            await this.post("/onboarding/missions", {});
+            window.location.href = "/dashboard";
+        },
+    };
+}
+</script>
+</body>
+</html>
