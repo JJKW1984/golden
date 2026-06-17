@@ -1,0 +1,30 @@
+finapp/run.py
+  s_a3d632f7763210::t_5ad82db6e94add 5,9-12
+finapp/services/balances.py
+  s_5905707d1ad206::t_364d926e4aea4e 174
+  s_5905707d1ad206::t_03913b7d757e45 169-170
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "55dc70bea3936ab07728b29de3229bb737eed880",
+  "prompts": {},
+  "sessions": {
+    "s_5905707d1ad206": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "67e364d6-d2c3-4142-935f-a43557189417",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    },
+    "s_a3d632f7763210": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "aeb1b468-4187-4a31-bdc6-daf259e0aa2d",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    }
+  }
+}
