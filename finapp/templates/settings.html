@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-8">
+    <header class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-gray-900">Settings</h1>
+        {% if needs_category_count and needs_category_count > 0 %}
+        <a href="#needs-category" class="inline-flex items-center gap-2 text-sm font-medium text-gray-700">
+            Needs Category
+            <span class="badge-count" style="background-color: #F59E0B;">{{ needs_category_count }}</span>
+        </a>
+        {% endif %}
+    </header>
+
+    <!-- Profile -->
+    <section class="bg-white rounded-xl border border-gray-200 p-6">
+        <h2 class="text-lg font-semibold mb-4">Profile</h2>
+        <form id="profile-form" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Your name</label>
+                <input name="user_name" value="{{ settings.user_name or '' }}"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Debt payoff method</label>
+                <select name="debt_method" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    <option value="snowball" {% if settings.debt_method == 'snowball' %}selected{% endif %}>Snowball</option>
+                    <option value="avalanche" {% if settings.debt_method == 'avalanche' %}selected{% endif %}>Avalanche</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Review day</label>
+                <input name="review_day" value="{{ settings.review_day or '' }}"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-500 mb-1">Hourly wage (time-cost display — coming soon)</label>
+                <input disabled placeholder="Disabled in this version"
+                       class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-400" />
+            </div>
+            <button type="button" onclick="saveProfile()" class="btn-add-transaction">Save profile</button>
+        </form>
+    </section>
+
+    <!-- Categories -->
+    <section class="bg-white rounded-xl border border-gray-200 p-6">
+        <h2 class="text-lg font-semibold mb-4">Categories</h2>
+        <ul class="divide-y divide-gray-100">
+            {% for cat in categories %}
+            <li class="flex items-center justify-between py-2 {% if not cat.is_active %}opacity-50{% endif %}">
+                <span>{{ cat.emoji or '' }} {{ cat.name }}</span>
+                <span class="text-xs text-gray-400">
+                    {{ cat.kind }}{% if cat.is_system %} · locked{% endif %}{% if not cat.is_active %} · hidden{% endif %}
+                </span>
+            </li>
+            {% endfor %}
+        </ul>
+        <p class="text-sm text-gray-500 mt-3">Rename, hide, reorder, and add categories via the Categories controls.</p>
+    </section>
+
+    <!-- CSV Import -->
+    <section class="bg-white rounded-xl border border-gray-200 p-6">
+        <h2 class="text-lg font-semibold mb-4">Import from CSV</h2>
+        <form action="/settings/import/csv" method="post" enctype="multipart/form-data" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">CSV file</label>
+                <input type="file" name="file" accept=".csv" required
+                       class="w-full text-sm text-gray-700" />
+            </div>
+            <div class="grid grid-cols-3 gap-3">
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Date column</label>
+                    <input name="map_date" value="{{ csv_column_map.get('date', '') }}" placeholder="Date"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Amount column</label>
+                    <input name="map_amount" value="{{ csv_column_map.get('amount', '') }}" placeholder="Amount"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Payee column</label>
+                    <input name="map_payee" value="{{ csv_column_map.get('payee', '') }}" placeholder="Description"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Which way means you spent money?</label>
+                <select name="spent_is_negative" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    <option value="true">Negative amounts are money out</option>
+                    <option value="false">Positive amounts are money out</option>
+                </select>
+            </div>
+            <button type="submit" class="btn-add-transaction">Preview import</button>
+        </form>
+        <p class="text-xs text-gray-500 mt-3">Duplicates already in your records are detected and skipped by default.</p>
+    </section>
+
+    <!-- Needs Category inbox -->
+    <section id="needs-category" class="bg-white rounded-xl border border-gray-200 p-6">
+        <h2 class="text-lg font-semibold mb-2">Needs Category</h2>
+        <p class="text-sm text-gray-600">
+            {% if needs_category_count and needs_category_count > 0 %}
+            You have <span class="font-semibold">{{ needs_category_count }}</span> imported
+            transaction(s) waiting to be categorized.
+            {% else %}
+            Imported transactions that need a category will show up here.
+            {% endif %}
+        </p>
+    </section>
+
+    <!-- Data & backup -->
+    <section class="bg-white rounded-xl border border-gray-200 p-6">
+        <h2 class="text-lg font-semibold mb-4">Your data</h2>
+        <div class="flex flex-wrap gap-3">
+            <button type="button" onclick="createBackup()" class="btn-add-transaction">Create backup</button>
+            <a href="/settings/export" class="inline-flex items-center px-4 py-2 rounded-lg font-medium
+                      text-gray-700 border border-gray-300 hover:bg-gray-50">Export data (CSV)</a>
+        </div>
+        <p id="backup-status" class="text-sm text-gray-500 mt-3"></p>
+    </section>
+
+    <!-- About -->
+    <section class="text-center text-xs text-gray-400">
+        Personal Finance App · v2.0 — Foundation Release
+    </section>
+</div>
+
+<script>
+    async function saveProfile() {
+        const form = document.getElementById('profile-form');
+        const payload = {
+            user_name: form.user_name.value,
+            debt_method: form.debt_method.value,
+            review_day: form.review_day.value,
+        };
+        await fetch('/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function createBackup() {
+        const status = document.getElementById('backup-status');
+        status.textContent = 'Creating backup…';
+        try {
+            const resp = await fetch('/settings/backup', { method: 'POST' });
+            const data = await resp.json();
+            status.textContent = 'Backup saved to ' + data.backup_path;
+        } catch (e) {
+            status.textContent = 'Could not create backup.';
+        }
+    }
+</script>
+{% endblock %}
