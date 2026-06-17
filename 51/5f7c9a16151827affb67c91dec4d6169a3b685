@@ -1,0 +1,29 @@
+pyproject.toml
+  s_874972025a9acc::t_760d2b88aa31ed 8-11,14,19-21
+  s_dc5d573f3b8882::t_5025c4788ea080 13
+  s_874972025a9acc::t_fe213bc939a535 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "515f7c9a16151827affb67c91dec4d6169a3b685",
+  "prompts": {},
+  "sessions": {
+    "s_874972025a9acc": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "e209d4ab-5898-4921-a02f-aaff6123d7d6",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    },
+    "s_dc5d573f3b8882": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "3cace0c7-578f-448c-909e-f6e2c3a6e748",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    }
+  }
+}
