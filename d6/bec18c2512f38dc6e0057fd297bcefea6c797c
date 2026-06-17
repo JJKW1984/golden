@@ -1,0 +1,34 @@
+finapp/services/onboarding.py
+  s_8e2bbc8fd3228b::t_e778b282a16d6b 1-244
+finapp/schemas.py
+  s_8e2bbc8fd3228b::t_da26b3854bf3f2 365-407
+tests/test_onboarding_router.py
+  s_8e2bbc8fd3228b::t_d47987c54ab7e9 1-104
+tests/integration/test_phase9_flows.py
+  s_8e2bbc8fd3228b::t_5b8889c186b78e 1-95
+finapp/routers/onboarding.py
+  s_8e2bbc8fd3228b::t_0268a0ac5814fe 1-129
+finapp/main.py
+  s_8e2bbc8fd3228b::t_293dde8b6f1ad0 5
+  s_8e2bbc8fd3228b::t_06471a8d856435 12
+tests/test_onboarding.py
+  s_8e2bbc8fd3228b::t_0fbb4432424720 1-165
+finapp/templates/onboarding.html
+  s_8e2bbc8fd3228b::t_d900847f0d5dd2 1-223
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "d6bec18c2512f38dc6e0057fd297bcefea6c797c",
+  "prompts": {},
+  "sessions": {
+    "s_8e2bbc8fd3228b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "afe6aed2-9273-451b-b7f2-efa678758fec",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    }
+  }
+}
