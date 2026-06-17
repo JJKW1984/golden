@@ -66,6 +66,14 @@
   var savedTheme = localStorage.getItem('theme') || 'light';
   applyTheme(savedTheme);
 
+  // The toggle button is rendered later in the HTML; sync its icon/labels once it's in the DOM.
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () {
+      var theme = document.documentElement.classList.contains('dark-theme') ? 'dark' : 'light';
+      updateToggleIcons(theme);
+    }, { once: true });
+  }
+
   // Expose toggleTheme globally so inline onclick handlers can call it.
   window.toggleTheme = toggleTheme;
 }());
