@@ -1,0 +1,44 @@
+finapp/services/csv_import.py
+  s_2c86e465b8d52e::t_95b9f6ee2d2402 98-99
+  s_2c86e465b8d52e::t_26d0fed15cfa6c 10
+  s_2c86e465b8d52e::t_d56c1eb866c3d2 152
+  s_2c86e465b8d52e::t_0fb91a03e43f60 167-189
+  s_2c86e465b8d52e::t_b7d98fa3befd74 1-9,11-97,100-151,153-166
+finapp/routers/settings.py
+  s_2c86e465b8d52e::t_d2da44c3f5690e 1-407
+finapp/templates/settings.html
+  s_2c86e465b8d52e::t_384d70287fbae4 1-156
+finapp/main.py
+  s_2c86e465b8d52e::t_01457245200c8c 22
+  s_2c86e465b8d52e::t_21369bb17576df 5
+finapp/services/export_csv.py
+  s_2c86e465b8d52e::t_0f9eb09c6717bf 62-66
+  s_2c86e465b8d52e::t_042cadc5f0a61a 1-61,67-85
+finapp/services/settings.py
+  s_2c86e465b8d52e::t_6541a15ae51349 93-95
+  s_2c86e465b8d52e::t_8e2f6e5cc44f66 1-92,96-180
+tests/test_csv_import.py
+  s_2c86e465b8d52e::t_d044ad63a9a337 1-138
+tests/test_settings.py
+  s_2c86e465b8d52e::t_0a6731ac0f0701 1-127
+tests/test_export_csv.py
+  s_2c86e465b8d52e::t_db635279265e79 1-63
+tests/integration/test_phase10_import_settings.py
+  s_2c86e465b8d52e::t_24e73affba3fe8 1-246
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "62e472220f310d3254294740fb8a148f50b2395b",
+  "prompts": {},
+  "sessions": {
+    "s_2c86e465b8d52e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c5152f33-ef5a-4632-b293-db37a3e3a502",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    }
+  }
+}
