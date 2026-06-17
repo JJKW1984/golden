@@ -1,0 +1,19 @@
+docs/superpowers/specs/2026-06-17-ui-design-system.md
+  s_3251910c9b1142::t_94ecc0b8d250bb 1-92,109-264,270-379,388
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "098825ce7f98f12171961d917319cb6845fdd28b",
+  "prompts": {},
+  "sessions": {
+    "s_3251910c9b1142": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "4e5f73c6-e0b6-4af8-9c5e-6d6641037ec7",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    }
+  }
+}
