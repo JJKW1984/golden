@@ -12,12 +12,12 @@
     </div>
 
     <!-- Streak Card: Prominent Display -->
-    <div class="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl shadow-md p-8 mb-8 border border-purple-100">
+    <div class="bg-gradient-to-br from-teal-50 to-sky-50 rounded-xl shadow-md p-8 mb-8 border border-teal-100">
         <div class="flex items-center gap-4">
             <div class="text-6xl">🔥</div>
             <div>
                 <p class="text-sm font-medium text-gray-600 uppercase tracking-wide">Current Streak</p>
-                <p class="text-5xl font-bold text-purple-600 mt-1">{{ dashboard.streak }}</p>
+                <p class="text-5xl font-bold text-teal-600 mt-1">{{ dashboard.streak }}</p>
                 <p class="text-sm text-gray-600 mt-2">
                     {% if dashboard.streak > 0 %}
                         You're doing great! Keep checking in daily.
@@ -54,46 +54,46 @@
     {% else %}
     <div class="bg-white rounded-xl shadow-md p-6 mb-8 border border-gray-200">
         <h2 class="text-lg font-bold text-gray-900 mb-2">Current Mission</h2>
-        <p class="text-gray-600">No active missions yet. Create one to get started!</p>
+        <p class="text-gray-600 mb-4">No active mission yet. Open Reviews to create one.</p>
+        <a href="/reviews" class="inline-flex items-center px-4 py-2 rounded-lg font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-200">
+            Open Reviews
+        </a>
     </div>
     {% endif %}
 
     <!-- This Week Pulse: Spending vs Target -->
     <div class="bg-white rounded-xl shadow-md p-6 mb-8 border border-gray-200">
         <h2 class="text-lg font-bold text-gray-900 mb-4">This Week Pulse</h2>
+        {% set pulse = dashboard.this_week_pulse %}
+        {% set remaining_cents = pulse.remaining_cents %}
 
         <!-- Main Spending Summary -->
         <div class="mb-6">
-            {% if dashboard.this_week_pulse.target_cents > 0 %}
+            {% if pulse.target_cents > 0 %}
                 <p class="text-base text-gray-700 font-semibold mb-2">
-                    You've spent <span class="text-lg font-bold text-gray-900">${{ (dashboard.this_week_pulse.spent_cents / 100) | round(2) }}</span>
-                    of ${{ (dashboard.this_week_pulse.target_cents / 100) | round(2) }} this week
+                    You've spent <span class="text-lg font-bold text-gray-900">${{ (pulse.spent_cents / 100) | round(2) }}</span>
+                    of ${{ (pulse.target_cents / 100) | round(2) }} this week
                 </p>
             {% else %}
                 <p class="text-base text-gray-700 font-semibold mb-2">
-                    You've spent <span class="text-lg font-bold text-gray-900">${{ (dashboard.this_week_pulse.spent_cents / 100) | round(2) }}</span>
+                    You've spent <span class="text-lg font-bold text-gray-900">${{ (pulse.spent_cents / 100) | round(2) }}</span>
                     this week
                 </p>
             {% endif %}
 
             <!-- Progress Bar with Color Coding -->
             <div class="bg-gray-100 rounded-full h-4 mb-2 overflow-hidden">
-                {% if dashboard.this_week_pulse.percentage <= 100 %}
-                    <div class="bg-gradient-to-r from-teal-400 to-teal-600 h-4 rounded-full transition-all duration-300"
-                         style="width: {{ dashboard.this_week_pulse.percentage }}%;"></div>
-                {% else %}
-                    <div class="bg-gradient-to-r from-amber-400 to-amber-600 h-4 rounded-full transition-all duration-300"
-                         style="width: 100%;"></div>
-                {% endif %}
+                <div class="{% if pulse.is_over_budget %}bg-gradient-to-r from-amber-400 to-amber-600{% else %}bg-gradient-to-r from-teal-400 to-teal-600{% endif %} h-4 rounded-full transition-all duration-300"
+                     style="width: {{ pulse.percentage }}%;"></div>
             </div>
 
             <!-- Status Text -->
             <div class="flex justify-between items-center text-sm">
-                <span class="font-semibold text-gray-900">{{ dashboard.this_week_pulse.percentage }}% spent</span>
-                {% if dashboard.this_week_pulse.percentage <= 100 %}
-                    <span class="text-teal-600 font-medium">On track ✓</span>
+                <span class="font-semibold text-gray-900">{{ pulse.usage_percentage }}% used</span>
+                {% if pulse.is_over_budget %}
+                    <span class="text-amber-600 font-medium">Over by ${{ ((0 - remaining_cents) / 100) | round(2) }}</span>
                 {% else %}
-                    <span class="text-amber-600 font-medium">Over budget ⚠</span>
+                    <span class="text-teal-600 font-medium">Remaining ${{ (remaining_cents / 100) | round(2) }}</span>
                 {% endif %}
             </div>
         </div>

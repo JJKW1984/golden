@@ -82,7 +82,7 @@
                             <td class="px-6 py-4 text-sm text-gray-900">{{ txn.category_name }}</td>
                             <td class="px-6 py-4 text-sm text-gray-600">{{ txn.memo or "-" }}</td>
                             <td class="px-6 py-4 text-sm text-gray-600">{{ txn.mood_tag or "-" }}</td>
-                            <td class="px-6 py-4 text-sm text-right font-medium {% if txn.direction == 'out' %}text-red-600{% else %}text-green-600{% endif %}">
+                            <td class="px-6 py-4 text-sm text-right font-medium {% if txn.direction == 'out' %}text-amber-700{% else %}text-teal-600{% endif %}">
                                 {% if txn.direction == 'out' %}-{% endif %}${{ (txn.amount_cents / 100)|round(2) }}
                             </td>
                         </tr>
@@ -90,7 +90,12 @@
                 {% else %}
                     <tr>
                         <td colspan="6" class="px-6 py-8 text-center text-gray-500">
-                            No transactions found. Create one to get started.
+                            <div class="space-y-3">
+                                <p class="text-gray-700">No transactions yet. Use Add Transaction to record your first one.</p>
+                                <button type="button" class="btn-add-transaction" onclick="openAddTransactionModal()">
+                                    Add Transaction
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 {% endif %}

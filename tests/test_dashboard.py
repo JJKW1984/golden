@@ -419,6 +419,46 @@ class TestThisWeekPulse:
 
         # Percentage should be reasonable (spent < target, so < 100)
         assert pulse["percentage"] < 100
+        assert pulse["usage_percentage"] == pulse["percentage"]
+        assert pulse["is_over_budget"] is False
+
+    def test_this_week_pulse_flags_over_budget(self, db, ctx, setup_account, current_period):
+        """this_week_pulse exposes over-budget state when spending exceeds the weekly target."""
+        from finapp.services.dashboard import get_dashboard_data
+
+        today = date.today()
+        week_start = today - timedelta(days=today.weekday())
+
+        spending_cat = db.query(BudgetCategory).filter(
+            BudgetCategory.account_id == ctx.account_id,
+            BudgetCategory.kind == "spending"
+        ).first()
+
+        alloc = BudgetAllocation(
+            account_id=ctx.account_id,
+            period_id=current_period.id,
+            category_id=spending_cat.id,
+            target_cents=4300,
+        )
+        db.add(alloc)
+        db.commit()
+
+        create_transaction(
+            ctx,
+            date=week_start,
+            amount_cents=5000,
+            direction="out",
+            category_id=spending_cat.id,
+            payee="Test",
+        )
+
+        data = get_dashboard_data(ctx)
+        pulse = data["this_week_pulse"]
+
+        assert pulse["usage_percentage"] > 100
+        assert pulse["percentage"] == 100
+        assert pulse["is_over_budget"] is True
+        assert pulse["remaining_cents"] < 0
 
     def test_this_week_pulse_excludes_future_transactions(self, db, ctx, setup_account, current_period):
         """this_week_pulse excludes transactions outside current week."""

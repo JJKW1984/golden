@@ -2,6 +2,7 @@ import os
 from datetime import date, datetime, timedelta
 from finapp.models import Settings, Review, BudgetCategory, BudgetAllocation, BudgetPeriod
 from finapp.services.ledger import create_transaction
+from finapp.services.seeds import seed_default_categories
 from finapp.services.reviews import (
     REFLECTION_PROMPTS,
     get_reflection_prompt,
@@ -70,6 +71,52 @@ def test_review_streak_counts_consecutive_completed_weeks(db, ctx, account):
 
     streak = get_review_streak(ctx)
     assert streak == 3
+
+
+def test_get_weekly_review_data_uses_over_budget_status(db, ctx, account):
+    seed_default_categories(db, ctx.account_id)
+
+    settings = Settings(account_id=ctx.account_id, review_day=date.today().strftime("%A").lower())
+    db.add(settings)
+    db.commit()
+
+    period = BudgetPeriod(
+        account_id=ctx.account_id,
+        year=date.today().year,
+        month=date.today().month,
+        income_received_cents=4300,
+        status="active",
+    )
+    db.add(period)
+    db.commit()
+
+    spending_cat = db.query(BudgetCategory).filter(
+        BudgetCategory.account_id == ctx.account_id,
+        BudgetCategory.kind == "spending",
+    ).first()
+
+    alloc = BudgetAllocation(
+        account_id=ctx.account_id,
+        period_id=period.id,
+        category_id=spending_cat.id,
+        target_cents=4300,
+    )
+    db.add(alloc)
+    db.commit()
+
+    today = date.today()
+    week_start = today - timedelta(days=today.weekday())
+    create_transaction(
+        ctx,
+        date=week_start,
+        amount_cents=5000,
+        direction="out",
+        category_id=spending_cat.id,
+        payee="Grocer",
+    )
+
+    data = get_weekly_review_data(ctx)
+    assert data["status"] == "amber"
 
 
 from finapp.models import DebtAccount, NetWorthSnapshot, Milestone

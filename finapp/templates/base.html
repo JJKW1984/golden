@@ -144,7 +144,7 @@
 
         .badge-count {
             @apply inline-flex items-center justify-center w-5 h-5 text-xs font-bold
-                   text-white bg-red-500 rounded-full;
+                   text-white bg-amber-500 rounded-full;
         }
 
         /* Responsive adjustments */
@@ -260,6 +260,8 @@
     <!-- Floating Add Transaction button (mobile) -->
     <button
         class="btn-add-transaction-floating md:hidden"
+        type="button"
+        aria-label="Add Transaction"
         onclick="openAddTransactionModal()"
         title="Add Transaction"
     >
@@ -284,6 +286,7 @@
                 <button
                     type="button"
                     class="text-gray-500 hover:text-gray-700 text-2xl font-light leading-none"
+                    aria-label="Close add transaction dialog"
                     onclick="closeAddTransactionModal()"
                 >
                     ×

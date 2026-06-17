@@ -83,7 +83,7 @@ def get_weekly_review_data(ctx: AccountContext) -> dict:
     from finapp.services.missions import get_active_missions
 
     pulse = _get_this_week_pulse(ctx)
-    status = "amber" if pulse["percentage"] > 100 else "teal"
+    status = "amber" if pulse["is_over_budget"] else "teal"
 
     return {
         "this_week_pulse": pulse,

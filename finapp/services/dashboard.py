@@ -14,7 +14,10 @@ Returns dashboard data structure:
     'this_week_pulse': {
         'spent_cents': int,
         'target_cents': int,
-        'percentage': int,     # 0-100
+        'percentage': int,     # capped at 100 for the progress bar
+        'usage_percentage': int,
+        'is_over_budget': bool,
+        'remaining_cents': int,
     },
     'next_right_action': {
         'action': str,
@@ -237,13 +240,16 @@ def _get_this_week_pulse(ctx: AccountContext) -> dict:
     # Assume 4.3 weeks per month for prorating
     weekly_target = int((target_cents or 0) / 4.3) if target_cents else 0
 
-    # Calculate percentage
-    percentage = 0
+    # Calculate usage percentage and display width separately.
+    usage_percentage = 0
     if weekly_target > 0:
-        percentage = min(100, int(spent_cents * 100 / weekly_target))
+        usage_percentage = int(spent_cents * 100 / weekly_target)
 
     return {
         "spent_cents": spent_cents,
         "target_cents": weekly_target,
-        "percentage": percentage,
+        "percentage": min(100, usage_percentage),
+        "usage_percentage": usage_percentage,
+        "is_over_budget": usage_percentage > 100,
+        "remaining_cents": weekly_target - spent_cents,
     }

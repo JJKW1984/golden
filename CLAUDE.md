@@ -111,9 +111,7 @@ finapp/
 
 See `docs/implementation_plan_v2.md` for phase map (0–11) and detailed Done gate for each.
 
-## Common Commands (Will Be)
-
-Once Phase 0 is complete:
+## Common Commands
 
 ```bash
 # Run the app (alembic migrate + start server + open browser)
@@ -141,16 +139,6 @@ alembic upgrade head
 alembic downgrade -1
 ```
 
-## Critical External References
-
-- **Product Design Spec v2.0:** `docs/product_design_spec.md` — The complete system spec. Phase briefs derive from this.
-  - Decisions D1–D14 lock the scope; any deviation must re-evaluate affected sections.
-  - Out of Scope (§11): subcategories, sinking funds, retirement projection, bank sync, native mobile (JSON API surface prepared), multi-user (seams built, not exposed).
-  - Appendix A: Multi-user migration path (the seam in action).
-  - Appendix B: Money handling reference (integer cents, Decimal parsing, why not float).
-
-- **Implementation Plan v2.0:** `docs/implementation_plan_v2.md` — Phase-by-phase briefs, order, and Done gates. Dispatch agents sequentially through this, one phase at a time.
-
 ## Data Correctness & Testing
 
 **Reconciliation is the release gate.** A phase is not done until:
@@ -158,26 +146,4 @@ alembic downgrade -1
 2. Integration tests pass.
 3. `recompute_balances(ctx)` produces zero drift.
 
-The reconciliation check runs in CI starting Phase 2. It rebuilds every cached balance from the ledger and asserts they match. This is the single non-negotiable correctness gate.
-
-**Property-style tests are encouraged.** For example, Phase 2's Done gate includes a randomized-transaction property test that `recompute_balances` produces zero drift across hundreds of generated transaction sets.
-
-## Onboarding a New Agent
-
-1. Read the **Product Design Spec v2.0** (`docs/product_design_spec.md`) — at least the Decisions (§1) and your phase's subsection of §6–§9.
-2. Read the **Implementation Plan v2.0** (`docs/implementation_plan_v2.md`) — the phase map and your phase's brief.
-3. Understand the architecture seam: `AccountContext` in every service, scoped queries in repository, HTTP-only routers.
-4. Know the three money rules: integer cents, `money.py` at boundaries only, `recompute_balances(ctx)` as the reconciliation gate.
-5. Dispatch your phase by the brief. Build unit tests, integration tests, and a passing reconciliation check before signaling Done.
-
-## Bootstrap (Phase 0)
-
-Phase 0 sets up the skeleton and the toolchain so all later phases drop into a known structure. Key steps:
-- Create the `finapp/` package with the file structure above.
-- Pin the stack: Python 3.11+, FastAPI, SQLAlchemy 2.0, Alembic, Pydantic v2, Uvicorn, HTMX, Tailwind.
-- Implement the three-layer seam: routers → services (taking `ctx` first) → repository (scoped by `ctx.account_id`).
-- Implement `money.py` with round-trip tests (parsing, rounding half-up, display, edge cases).
-- Implement `run.py`: alembic migrate → Uvicorn loopback bind → browser open.
-- Stand up CI: lint + test runner (placeholder reconciliation slot for Phase 2+).
-
-See Phase 0 brief in `docs/implementation_plan_v2.md` for the full Done gate.
+**Property-style tests are encouraged.**
