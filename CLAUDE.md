@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Personal Finance App (v2.0 — Foundation Release)**
+### Personal Finance App (v2.0 — Foundation Release)
 
 A single-user local web application for personal budget management. Runs on `127.0.0.1:5000` (loopback only). Users log income, expenses, and debt payments; the app derives balances from transactions and helps allocate paychecks to budget categories each month using a cumulative-envelope model.
 
@@ -25,7 +25,7 @@ Single-user v1 hardcodes `account_id = 1` in `deps.py::get_account_context()`; f
 ## Tech Stack
 
 | Layer | Choice |
-|---|---|
+| --- | --- |
 | Language | Python 3.11+ |
 | Framework | FastAPI + Jinja2 + HTMX (server-rendered HTML) |
 | ORM | SQLAlchemy 2.0 (typed) |
@@ -47,45 +47,6 @@ Single-user v1 hardcodes `account_id = 1` in `deps.py::get_account_context()`; f
 
 **Every phase's Done gate includes reconciliation:** `recompute_balances(ctx)` rebuilds every cache from the ledger and runs in CI. Cached balance must equal pure-derived value.
 
-## File Structure (at completion)
-
-```
-finapp/
-├── main.py                      # FastAPI app, router registration
-├── deps.py                      # get_account_context() dependency (the seam)
-├── db.py                        # Engine, session, WAL pragma, SQLite/Postgres URL
-├── models.py                    # SQLAlchemy ORM models (all tables, all account_id)
-├── schemas.py                   # Pydantic request/response models
-├── money.py                     # to_cents, to_display (most-tested unit)
-├── run.py                       # Startup: alembic upgrade → Uvicorn bind → browser
-├── requirements.txt
-├── alembic/                     # Migrations (versioned from day one)
-├── routers/
-│   ├── dashboard.py
-│   ├── transactions.py
-│   ├── budget.py
-│   ├── debt.py
-│   ├── savings.py
-│   ├── missions.py
-│   ├── reviews.py
-│   ├── settings.py
-│   └── import_csv.py
-├── services/
-│   ├── ledger.py                # SINGLE write path for all transactions
-│   ├── allocation.py            # Cumulative-envelope allocation logic
-│   ├── balances.py              # Derived values (budget spent, debt, savings, net worth)
-│   ├── debt_payoff.py           # Amortization + projection scenarios
-│   ├── csv_import.py            # CSV parsing, column mapping, dedup
-│   ├── streak.py                # Daily check-in streak + grace day + milestones
-│   └── missions.py              # Mission queue + derived progress
-├── templates/                   # base.html + per-feature dirs + _partials/
-├── static/
-│   ├── css/
-│   └── js/
-├── finance.db                   # SQLite (auto-created, WAL)
-├── backups/                     # Auto-backups (SQLite Online Backup API, not shutil.copy)
-```
-
 ## Key Invariants (Audit Every Phase)
 
 1. **One write path** — Every transaction is created/voided/edited through `services/ledger.py`. No other code writes a `Transaction`.
@@ -104,7 +65,8 @@ finapp/
 3. Agent builds phase.
 4. Agent must pass the phase's **Done gate** before the next phase dispatches.
 
-**Done gate for every phase (starting Phase 2):** 
+**Done gate for every phase (starting Phase 2):**
+
 - Unit tests for the phase's logic pass.
 - Integration tests for the phase's user-facing flow pass (where applicable).
 - **`recompute_balances(ctx)` reconciliation check passes** — every cached balance equals its pure-derived value computed from the ledger.
@@ -151,6 +113,7 @@ uv run alembic downgrade -1
 ## Data Correctness & Testing
 
 **Reconciliation is the release gate.** A phase is not done until:
+
 1. Unit tests pass.
 2. Integration tests pass.
 3. `recompute_balances(ctx)` produces zero drift.

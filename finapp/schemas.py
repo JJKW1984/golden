@@ -1,9 +1,11 @@
 from datetime import date
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class BudgetAllocationResponse(BaseModel):
     """Response model for a single budget allocation."""
+    model_config = ConfigDict(from_attributes=True)
+    
     id: int
     category_id: int
     category_name: str
@@ -11,9 +13,6 @@ class BudgetAllocationResponse(BaseModel):
     funded_cents: int  # Derived, not stored
     spent_cents: int  # Derived
     remaining_cents: int  # Derived: funded - spent
-
-    class Config:
-        from_attributes = True
 
 
 class AllocationRitualRequest(BaseModel):
@@ -66,64 +65,58 @@ class AllocationTriageResponse(BaseModel):
 
 class MilestoneResponse(BaseModel):
     """Response model for a created milestone."""
+    model_config = ConfigDict(from_attributes=True)
+    
     threshold: int
     message: str
-
-    class Config:
-        from_attributes = True
 
 
 class CheckinResponse(BaseModel):
     """Response after recording a check-in."""
+    model_config = ConfigDict(from_attributes=True)
+    
     checkin_id: int
     streak: int
     milestones_created: list[MilestoneResponse]
 
-    class Config:
-        from_attributes = True
-
 
 class DashboardPulseResponse(BaseModel):
     """Weekly spending pulse data."""
+    model_config = ConfigDict(from_attributes=True)
+    
     spent_cents: int
     target_cents: int
     percentage: int
 
-    class Config:
-        from_attributes = True
-
 
 class DashboardMissionResponse(BaseModel):
     """Current active mission with progress."""
+    model_config = ConfigDict(from_attributes=True)
+    
     title: str
     progress: int  # 0-100
     target: str
 
-    class Config:
-        from_attributes = True
-
 
 class NextRightActionResponse(BaseModel):
     """Next right action prompt."""
+    model_config = ConfigDict(from_attributes=True)
+    
     action: str
     label: str
     hint: str
 
-    class Config:
-        from_attributes = True
-
 
 class DashboardResponse(BaseModel):
     """Complete dashboard data structure."""
+    model_config = ConfigDict(from_attributes=True)
+    
     greeting: str
     date: str
     streak: int
     current_mission: DashboardMissionResponse | None
     this_week_pulse: DashboardPulseResponse
     next_right_action: NextRightActionResponse
-
-    class Config:
-        from_attributes = True
 
 
 # Phase 5: Budget & Transactions
@@ -141,6 +134,8 @@ class TransactionRequest(BaseModel):
 
 class TransactionResponse(BaseModel):
     """Response model for a transaction."""
+    model_config = ConfigDict(from_attributes=True)
+    
     id: int
     date: date
     amount_cents: int
@@ -156,12 +151,11 @@ class TransactionResponse(BaseModel):
     created_at: str
     updated_at: str
 
-    class Config:
-        from_attributes = True
-
 
 class BudgetTableRowResponse(BaseModel):
     """Single row in the budget table."""
+    model_config = ConfigDict(from_attributes=True)
+    
     category_id: int
     category_name: str
     target_cents: int
@@ -170,12 +164,11 @@ class BudgetTableRowResponse(BaseModel):
     remaining_cents: int
     is_overspent: bool  # remaining_cents < 0
 
-    class Config:
-        from_attributes = True
-
 
 class BudgetSummaryResponse(BaseModel):
     """Budget data for a single period (Screen 2)."""
+    model_config = ConfigDict(from_attributes=True)
+    
     period_id: int
     year: int
     month: int
@@ -188,12 +181,11 @@ class BudgetSummaryResponse(BaseModel):
     is_zero_based: bool
     categories: list[BudgetTableRowResponse]
 
-    class Config:
-        from_attributes = True
-
 
 class BudgetHistoryPeriodResponse(BaseModel):
     """Summary of a past period (for history tab)."""
+    model_config = ConfigDict(from_attributes=True)
+    
     period_id: int
     year: int
     month: int
@@ -201,19 +193,15 @@ class BudgetHistoryPeriodResponse(BaseModel):
     total_spent_cents: int
     total_target_cents: int
 
-    class Config:
-        from_attributes = True
-
 
 class OverageDetectionResponse(BaseModel):
     """Response when an overage is detected after expense logging."""
+    model_config = ConfigDict(from_attributes=True)
+    
     overage_amount_cents: int
     overage_category_id: int
     overage_category_name: str
     available_categories: list[BudgetTableRowResponse]  # Categories with headroom, sorted by headroom descending
-
-    class Config:
-        from_attributes = True
 
 
 class BudgetReallocateRequest(BaseModel):
@@ -226,13 +214,12 @@ class BudgetReallocateRequest(BaseModel):
 
 class BudgetReallocateResponse(BaseModel):
     """Response after reallocation."""
+    model_config = ConfigDict(from_attributes=True)
+    
     from_allocation_id: int
     to_allocation_id: int
     from_target_cents: int
     to_target_cents: int
-
-    class Config:
-        from_attributes = True
 
 
 # Phase 7: Savings & Net Worth
@@ -253,6 +240,8 @@ class SavingsWithdrawalRequest(BaseModel):
 
 class SavingsGoalResponse(BaseModel):
     """A single savings goal with derived balance."""
+    model_config = ConfigDict(from_attributes=True)
+    
     id: int
     name: str
     goal_type: str
@@ -262,12 +251,11 @@ class SavingsGoalResponse(BaseModel):
     is_complete: bool
     target_date: date | None
 
-    class Config:
-        from_attributes = True
-
 
 class EmergencyFundResponse(BaseModel):
     """Emergency Fund card data (Screen 5)."""
+    model_config = ConfigDict(from_attributes=True)
+    
     goal_id: int
     balance_cents: int
     target_cents: int
@@ -276,9 +264,6 @@ class EmergencyFundResponse(BaseModel):
     days_of_coverage_estimated: bool
     est_complete_months: int | None
     est_complete_date: str | None
-
-    class Config:
-        from_attributes = True
 
 
 class AssetAccountRequest(BaseModel):
@@ -290,30 +275,30 @@ class AssetAccountRequest(BaseModel):
 
 class AssetAccountResponse(BaseModel):
     """Response model for an asset account."""
+    model_config = ConfigDict(from_attributes=True)
+    
     id: int
     name: str
     balance_cents: int
     is_active: bool
 
-    class Config:
-        from_attributes = True
-
 
 class NetWorthResponse(BaseModel):
     """Net worth summary (9.8)."""
+    model_config = ConfigDict(from_attributes=True)
+    
     net_worth_cents: int
     total_assets_cents: int
     total_debt_cents: int
     trend: list[dict]  # Monthly snapshots; populated starting Phase 8
-
-    class Config:
-        from_attributes = True
 
 
 # Phase 8: Missions, Reviews, Milestones
 
 class MissionProgressResponse(BaseModel):
     """A single mission with derived progress."""
+    model_config = ConfigDict(from_attributes=True)
+    
     id: int
     name: str
     mission_type: str
@@ -324,9 +309,6 @@ class MissionProgressResponse(BaseModel):
     current_cents: int
     target_cents: int
     percent: int
-
-    class Config:
-        from_attributes = True
 
 
 class MissionReorderRequest(BaseModel):
@@ -349,14 +331,13 @@ class MonthlyReviewCloseRequest(BaseModel):
 
 class MilestoneDetailResponse(BaseModel):
     """Full milestone detail for the celebration screen."""
+    model_config = ConfigDict(from_attributes=True)
+    
     id: int
     milestone_type: str
     title: str
     description: str | None
     celebrated: bool
-
-    class Config:
-        from_attributes = True
 
 
 class MilestoneCelebrateRequest(BaseModel):

@@ -3,7 +3,7 @@ Mission service: the mission queue. Progress is always DERIVED from the
 linked DebtAccount/SavingsGoal — never stored — so it can never drift from
 the ledger (same invariant as services/balances.py).
 """
-from datetime import datetime
+from datetime import datetime, UTC
 from finapp.deps import AccountContext
 from finapp.models import Mission, DebtAccount, SavingsGoal
 from finapp.services.balances import get_debt_balance_cents, get_savings_goal_balance_cents
@@ -90,7 +90,7 @@ def complete_mission(ctx: AccountContext, mission_id: int) -> Mission:
         raise ValueError(f"Mission {mission_id} not found")
 
     mission.status = "completed"
-    mission.completed_at = datetime.utcnow()
+    mission.completed_at = datetime.now(UTC)
     ctx.db.commit()
     return mission
 

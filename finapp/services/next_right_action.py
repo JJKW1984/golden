@@ -11,7 +11,7 @@ Priority order (first match wins):
 7. Last transaction >5 days ago → "Log Recent Activity"
 8. (default) → "You're on track"
 """
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, UTC
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -167,7 +167,7 @@ def _days_since_last_transaction(ctx: AccountContext) -> int:
     if not last_txn:
         return 0
 
-    days_ago = (datetime.utcnow().date() - last_txn.date).days
+    days_ago = (datetime.now(UTC).date() - last_txn.date).days
     return days_ago
 
 

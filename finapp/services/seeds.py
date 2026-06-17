@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from sqlalchemy.orm import Session
 from finapp.models import Account, BudgetCategory
 
@@ -76,7 +76,7 @@ def seed_default_categories(db: Session, account_id: int):
             sort_order=cat_data["sort_order"],
             emoji=cat_data.get("emoji"),
             is_active=True,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
         )
         db.add(category)
 

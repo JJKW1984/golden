@@ -304,13 +304,13 @@ class TestPriority4ReviewDueToday:
         db.commit()
 
         # Create a review with no prompt_shown (due today)
-        from datetime import datetime
+        from datetime import datetime, UTC
         review = Review(
             account_id=ctx.account_id,
             review_type="weekly",
             week_start=date.today() - timedelta(days=date.today().weekday()),
             prompt_shown=None,  # Not yet shown
-            completed_at=datetime.utcnow(),
+            completed_at=datetime.now(UTC),
         )
         db.add(review)
         db.commit()
@@ -353,13 +353,13 @@ class TestPriority4ReviewDueToday:
         db.commit()
 
         # Create a review with prompt_shown (already shown)
-        from datetime import datetime
+        from datetime import datetime, UTC
         review = Review(
             account_id=ctx.account_id,
             review_type="weekly",
             week_start=date.today() - timedelta(days=date.today().weekday()),
             prompt_shown="How did this week go?",  # Already shown
-            completed_at=datetime.utcnow(),
+            completed_at=datetime.now(UTC),
         )
         db.add(review)
         db.commit()
@@ -421,7 +421,7 @@ class TestPriority5MonthlyResetAvailable:
 
     def test_reset_not_available_when_prior_month_closed(self, db, account, ctx, monkeypatch):
         """When prior month is closed, should not return Close Previous Month."""
-        from datetime import datetime
+        from datetime import datetime, UTC
 
         # Mock date to be June 2, 2026
         test_date = date(2026, 6, 2)
@@ -454,7 +454,7 @@ class TestPriority5MonthlyResetAvailable:
             month=5,
             income_received_cents=0,
             status="closed",  # Already closed
-            closed_at=datetime.utcnow(),
+            closed_at=datetime.now(UTC),
         )
         db.add(prior_period)
         db.commit()

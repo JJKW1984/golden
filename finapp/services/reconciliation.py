@@ -2,7 +2,7 @@
 Reconciliation harness for verifying that cached balances match pure-derived values.
 This is the consistency check that runs on monthly close and in CI.
 """
-from datetime import datetime, date
+from datetime import datetime, date, UTC
 from decimal import Decimal
 from sqlalchemy.orm import Session
 from finapp.models import (
@@ -200,7 +200,7 @@ def apply_recomputed_balances(db: Session, account_id: int) -> dict:
         derived = compute_debt_balance_cents(db, account_id, debt.id)
         debt.cached_balance_cents = derived
         if derived == 0 and debt.paid_off_at is None:
-            debt.paid_off_at = datetime.utcnow()
+            debt.paid_off_at = datetime.now(UTC)
             create_milestone_if_new(
                 ctx,
                 milestone_type="debt_paid_off",
@@ -217,7 +217,7 @@ def apply_recomputed_balances(db: Session, account_id: int) -> dict:
         goal.cached_balance_cents = derived
         if not goal.is_complete and derived >= goal.target_cents and goal.target_cents > 0:
             goal.is_complete = True
-            goal.completed_at = datetime.utcnow()
+            goal.completed_at = datetime.now(UTC)
             create_milestone_if_new(
                 ctx,
                 milestone_type="savings_goal_reached",

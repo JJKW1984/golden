@@ -1,0 +1,188 @@
+D:\golden\.venv\Lib\site-packages\pytest_asyncio\plugin.py:208: PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the fixture caching scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to function scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+============================= test session starts =============================
+platform win32 -- Python 3.12.10, pytest-8.3.3, pluggy-1.6.0
+rootdir: D:\golden
+configfile: pyproject.toml
+plugins: anyio-4.14.0, asyncio-0.24.0
+asyncio: mode=Mode.AUTO, default_loop_scope=None
+collected 369 items
+
+tests\integration\test_allocation_flow.py ..                             [  0%]
+tests\integration\test_phase10_import_settings.py ..........             [  3%]
+tests\integration\test_phase5_flows.py ........                          [  5%]
+tests\integration\test_phase8_flows.py .                                 [  5%]
+tests\integration\test_phase9_flows.py .                                 [  5%]
+tests\test_allocation.py .......                                         [  7%]
+tests\test_backup.py ..                                                  [  8%]
+tests\test_balances.py .....................                             [ 14%]
+tests\test_budget.py ............                                        [ 17%]
+tests\test_budget_router.py ..........                                   [ 20%]
+tests\test_csv_import.py .........                                       [ 22%]
+tests\test_dashboard.py ............................                     [ 30%]
+tests\test_dashboard_router.py ....................                      [ 35%]
+tests\test_debt_payoff.py ....                                           [ 36%]
+tests\test_debt_router.py ....................                           [ 42%]
+tests\test_export_csv.py ...                                             [ 42%]
+tests\test_ledger.py ..............                                      [ 46%]
+tests\test_milestones.py ......                                          [ 48%]
+tests\test_milestones_router.py ...                                      [ 49%]
+tests\test_missions.py .......                                           [ 50%]
+tests\test_missions_router.py ...                                        [ 51%]
+tests\test_money.py ...............                                      [ 55%]
+tests\test_next_right_action.py ............F.........                   [ 61%]
+tests\test_onboarding.py .............                                   [ 65%]
+tests\test_onboarding_router.py ........                                 [ 67%]
+tests\test_overage.py ...........                                        [ 70%]
+tests\test_reconciliation.py ................                            [ 74%]
+tests\test_reviews.py .........                                          [ 77%]
+tests\test_reviews_router.py ....                                        [ 78%]
+tests\test_savings_router.py ...........                                 [ 81%]
+tests\test_seeds.py ...                                                  [ 82%]
+tests\test_settings.py ............                                      [ 85%]
+tests\test_streak.py ....................                                [ 90%]
+tests\test_transactions.py ..................                            [ 95%]
+tests\test_transactions_router.py ................                       [100%]
+
+================================== FAILURES ===================================
+_ TestPriority7LastTransactionOld.test_last_transaction_older_than_5_days_returns_log_activity _
+tests\test_next_right_action.py:666: in test_last_transaction_older_than_5_days_returns_log_activity
+    assert result['action'] == 'log_recent_activity'
+E   AssertionError: assert 'on_track' == 'log_recent_activity'
+E     
+E     - log_recent_activity
+E     + on_track
+============================== warnings summary ===============================
+tests/integration/test_allocation_flow.py: 16 warnings
+tests/integration/test_phase10_import_settings.py: 80 warnings
+tests/integration/test_phase5_flows.py: 64 warnings
+tests/integration/test_phase9_flows.py: 8 warnings
+tests/test_allocation.py: 56 warnings
+tests/test_balances.py: 160 warnings
+tests/test_budget.py: 88 warnings
+tests/test_budget_router.py: 80 warnings
+tests/test_csv_import.py: 56 warnings
+tests/test_dashboard.py: 216 warnings
+tests/test_dashboard_router.py: 160 warnings
+tests/test_debt_router.py: 112 warnings
+tests/test_export_csv.py: 24 warnings
+tests/test_ledger.py: 88 warnings
+tests/test_next_right_action.py: 152 warnings
+tests/test_onboarding.py: 24 warnings
+tests/test_onboarding_router.py: 16 warnings
+tests/test_overage.py: 88 warnings
+tests/test_reconciliation.py: 128 warnings
+tests/test_reviews.py: 8 warnings
+tests/test_seeds.py: 24 warnings
+tests/test_settings.py: 96 warnings
+tests/test_streak.py: 160 warnings
+tests/test_transactions.py: 144 warnings
+tests/test_transactions_router.py: 128 warnings
+  D:\golden\finapp\services\seeds.py:79: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    created_at=datetime.utcnow(),
+
+tests/integration/test_phase10_import_settings.py: 1 warning
+tests/integration/test_phase9_flows.py: 2 warnings
+tests/test_debt_router.py: 3 warnings
+tests/test_onboarding_router.py: 2 warnings
+tests/test_savings_router.py: 2 warnings
+tests/test_transactions_router.py: 4 warnings
+  D:\golden\.venv\Lib\site-packages\starlette\templating.py:161: DeprecationWarning: The `name` is not the first parameter anymore. The first parameter should be the `Request` instance.
+  Replace `TemplateResponse(name, {"request": request})` by `TemplateResponse(request, name)`.
+    warnings.warn(
+
+tests/integration/test_phase10_import_settings.py::test_post_settings_updates_profile
+  D:\golden\.venv\Lib\site-packages\pydantic\main.py:1114: PydanticDeprecatedSince20: The `dict` method is deprecated; use `model_dump` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.9/migration/
+    warnings.warn('The `dict` method is deprecated; use `model_dump` instead.', category=PydanticDeprecatedSince20)
+
+tests/integration/test_phase8_flows.py::test_full_phase8_month_flow
+tests/test_reviews.py::test_ensure_weekly_review_due_creates_pending_review_on_review_day
+tests/test_reviews.py::test_complete_weekly_review_sets_prompt_and_notes
+tests/test_reviews_router.py::test_get_weekly_review_endpoint
+tests/test_reviews_router.py::test_post_weekly_review_endpoint
+  D:\golden\finapp\services\reviews.py:70: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    completed_at=datetime.utcnow(),
+
+tests/integration/test_phase8_flows.py::test_full_phase8_month_flow
+tests/test_reviews.py::test_complete_weekly_review_sets_prompt_and_notes
+tests/test_reviews_router.py::test_post_weekly_review_endpoint
+  D:\golden\finapp\services\reviews.py:123: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    review.completed_at = datetime.utcnow()
+
+tests/integration/test_phase8_flows.py::test_full_phase8_month_flow
+tests/test_reviews.py::test_close_month_marks_period_closed_and_creates_next
+tests/test_reviews.py::test_close_month_creates_two_snapshots_for_two_months
+tests/test_reviews.py::test_close_month_creates_two_snapshots_for_two_months
+tests/test_reviews_router.py::test_post_monthly_review_endpoint
+  D:\golden\finapp\services\reviews.py:215: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    period.closed_at = datetime.utcnow()
+
+tests/integration/test_phase8_flows.py::test_full_phase8_month_flow
+tests/test_missions.py::test_complete_mission_sets_status_and_timestamp
+tests/test_missions_router.py::test_complete_mission_endpoint
+  D:\golden\finapp\services\missions.py:93: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    mission.completed_at = datetime.utcnow()
+
+tests/integration/test_phase9_flows.py::test_full_onboarding_walkthrough
+tests/test_onboarding.py::test_confirm_categories_renames_adds_and_hides
+tests/test_onboarding.py::test_confirm_categories_renames_adds_and_hides
+tests/test_onboarding_router.py::test_post_categories_applies_edits
+  D:\golden\finapp\services\onboarding.py:109: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    created_at=datetime.utcnow(),
+
+tests/test_balances.py::TestDebtBalance::test_debt_balance_never_negative
+tests/test_dashboard.py::TestEdgeCases::test_dashboard_full_debt_progress
+tests/test_milestones.py::test_debt_paid_off_milestone_fires_once
+  D:\golden\finapp\services\reconciliation.py:203: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    debt.paid_off_at = datetime.utcnow()
+
+tests/test_balances.py::TestDaysOfExpensesCoverage::test_coverage_uses_spending_category_only
+tests/test_balances.py::TestDaysOfExpensesCoverage::test_coverage_fallback_uses_spending_targets_when_under_30_days
+tests/test_milestones.py::test_savings_goal_reached_milestone_fires_once
+tests/test_reconciliation.py::TestSavingsGoalCompletion::test_goal_marked_complete_when_balance_reaches_target
+  D:\golden\finapp\services\reconciliation.py:220: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    goal.completed_at = datetime.utcnow()
+
+tests/test_next_right_action.py::TestPriority3UnallocatedIncome::test_zero_unallocated_does_not_return_allocate
+tests/test_next_right_action.py::TestPriority4ReviewDueToday::test_review_already_shown_does_not_return_do_review
+tests/test_next_right_action.py::TestPriority6ActiveMissionDebtPayment::test_debt_payment_logged_does_not_return_log_payment
+tests/test_next_right_action.py::TestPriority7LastTransactionOld::test_last_transaction_older_than_5_days_returns_log_activity
+tests/test_next_right_action.py::TestPriority7LastTransactionOld::test_recent_transaction_does_not_return_log_activity
+tests/test_next_right_action.py::TestPriority8Default::test_all_priorities_satisfied_returns_on_track
+tests/test_next_right_action.py::TestIntegration::test_complete_month_flow
+tests/test_next_right_action.py::TestEdgeCases::test_negative_unallocated_treated_as_zero
+  D:\golden\finapp\services\next_right_action.py:170: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    days_ago = (datetime.utcnow().date() - last_txn.date).days
+
+tests/test_next_right_action.py::TestPriority4ReviewDueToday::test_review_due_today_returns_do_review
+  D:\golden\tests\test_next_right_action.py:313: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    completed_at=datetime.utcnow(),
+
+tests/test_next_right_action.py::TestPriority4ReviewDueToday::test_review_already_shown_does_not_return_do_review
+  D:\golden\tests\test_next_right_action.py:362: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    completed_at=datetime.utcnow(),
+
+tests/test_next_right_action.py::TestPriority5MonthlyResetAvailable::test_reset_not_available_when_prior_month_closed
+  D:\golden\tests\test_next_right_action.py:457: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    closed_at=datetime.utcnow(),
+
+tests/test_reviews.py::test_review_streak_counts_consecutive_completed_weeks
+tests/test_reviews.py::test_review_streak_counts_consecutive_completed_weeks
+tests/test_reviews.py::test_review_streak_counts_consecutive_completed_weeks
+  D:\golden\tests\test_reviews.py:67: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    prompt_shown="done", completed_at=datetime.utcnow(),
+
+tests/test_settings.py::test_rename_category
+  D:\golden\tests\test_settings.py:80: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+    refetched = settings_ctx.db.query(BudgetCategory).get(cat.id)
+
+tests/test_settings.py::test_hide_category_sets_inactive
+  D:\golden\tests\test_settings.py:96: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+    refetched = settings_ctx.db.query(BudgetCategory).get(cat.id)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_next_right_action.py::TestPriority7LastTransactionOld::test_last_transaction_older_than_5_days_returns_log_activity
+================ 1 failed, 368 passed, 2234 warnings in 14.61s ================

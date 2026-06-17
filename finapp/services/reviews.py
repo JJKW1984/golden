@@ -7,7 +7,7 @@ Review row the first time it's called on the account's configured review_day
 each week — idempotent per week.
 """
 import os
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, UTC
 
 from finapp.deps import AccountContext
 from finapp.models import Settings, Review, BudgetPeriod
@@ -67,7 +67,7 @@ def ensure_weekly_review_due(ctx: AccountContext) -> Review | None:
         review_type="weekly",
         week_start=week_start,
         prompt_shown=None,
-        completed_at=datetime.utcnow(),
+        completed_at=datetime.now(UTC),
     )
     ctx.db.add(review)
     ctx.db.commit()
@@ -110,7 +110,7 @@ def complete_weekly_review(ctx: AccountContext, intention: str | None, quick: bo
         if review is None:
             review = Review(
                 account_id=ctx.account_id, review_type="weekly", week_start=week_start,
-                completed_at=datetime.utcnow(),
+                completed_at=datetime.now(UTC),
             )
             ctx.db.add(review)
 
@@ -120,7 +120,7 @@ def complete_weekly_review(ctx: AccountContext, intention: str | None, quick: bo
 
     review.prompt_shown = "What's one intention for next week?"
     review.notes = intention
-    review.completed_at = datetime.utcnow()
+    review.completed_at = datetime.now(UTC)
     ctx.db.commit()
 
     if is_first_ever:
@@ -212,7 +212,7 @@ def close_month(
         raise ValueError(f"Period {period_id} not found")
 
     period.status = "closed"
-    period.closed_at = datetime.utcnow()
+    period.closed_at = datetime.now(UTC)
     if notes:
         period.notes = notes
     ctx.db.commit()

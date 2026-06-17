@@ -7,7 +7,7 @@ Steps: welcome+income -> categories -> debt -> emergency fund -> mission queue
 HTTP boundary in the router, per the money-discipline rule). Every function
 takes ``ctx`` first and is scoped by ``ctx.account_id``.
 """
-from datetime import datetime
+from datetime import datetime, UTC
 
 from finapp.deps import AccountContext
 from finapp.models import Settings, BudgetCategory, DebtAccount, SavingsGoal, Mission
@@ -106,7 +106,7 @@ def confirm_categories(
             is_system=False,
             is_active=True,
             sort_order=max_order + i,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
         ))
 
     ctx.db.commit()

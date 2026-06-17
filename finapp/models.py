@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Date, UniqueConstraint
 from sqlalchemy.orm import relationship
 
@@ -10,7 +10,7 @@ class Account(Base):
 
     id = Column(Integer, primary_key=True)
     display_name = Column(String(255), nullable=False)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
 
     settings = relationship("Settings", back_populates="account", uselist=False)
     budget_categories = relationship("BudgetCategory", back_populates="account", cascade="all, delete-orphan")
@@ -42,8 +42,8 @@ class Settings(Base):
     check_in_anchor = Column(String(255))  # User-described habit anchor
     currency_symbol = Column(String(10), nullable=False, default="$")
     csv_column_map = Column(Text, nullable=True)  # JSON: remembered bank column mapping
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     account = relationship("Account", back_populates="settings")
 
@@ -59,7 +59,7 @@ class BudgetCategory(Base):
     kind = Column(String(50), nullable=False, default="spending")  # 'spending' | 'income' | 'debt' | 'savings'
     is_system = Column(Boolean, nullable=False, default=False)  # Locked defaults
     is_active = Column(Boolean, nullable=False, default=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
 
     account = relationship("Account", back_populates="budget_categories")
     budget_allocations = relationship("BudgetAllocation", back_populates="category", cascade="all, delete-orphan")
@@ -78,7 +78,7 @@ class BudgetPeriod(Base):
     status = Column(String(50), nullable=False, default="active")  # 'active' | 'closed'
     notes = Column(Text, nullable=True)  # Monthly reflection
     closed_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
 
     account = relationship("Account", back_populates="budget_periods")
     budget_allocations = relationship("BudgetAllocation", back_populates="period", cascade="all, delete-orphan")
@@ -95,7 +95,7 @@ class BudgetAllocation(Base):
     period_id = Column(Integer, ForeignKey("budget_periods.id"), nullable=False)
     category_id = Column(Integer, ForeignKey("budget_categories.id"), nullable=False)
     target_cents = Column(Integer, nullable=False, default=0)  # Planned amount for the month
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
 
     account = relationship("Account")
     period = relationship("BudgetPeriod", back_populates="budget_allocations")
@@ -122,8 +122,8 @@ class Transaction(Base):
     is_imported = Column(Boolean, nullable=False, default=False)
     import_hash = Column(String(255), nullable=True)  # Dedup key
     is_deleted = Column(Boolean, nullable=False, default=False)  # Soft delete
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     account = relationship("Account", back_populates="transactions")
     period = relationship("BudgetPeriod", back_populates="transactions")
@@ -145,8 +145,8 @@ class DebtAccount(Base):
     is_active = Column(Boolean, nullable=False, default=True)
     paid_off_at = Column(DateTime, nullable=True)
     notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     account = relationship("Account", back_populates="debt_accounts")
 
@@ -166,8 +166,8 @@ class SavingsGoal(Base):
     is_complete = Column(Boolean, nullable=False, default=False)  # DERIVED flag (cached_balance >= target)
     completed_at = Column(DateTime, nullable=True)
     notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     account = relationship("Account", back_populates="savings_goals")
 
@@ -183,9 +183,9 @@ class Mission(Base):
     link_id = Column(Integer, nullable=True)  # FK to DebtAccount or SavingsGoal
     status = Column(String(50), nullable=False, default="active")  # 'active' | 'completed' | 'paused'
     sort_order = Column(Integer)  # Queue position
-    started_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    started_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
     completed_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
 
     account = relationship("Account", back_populates="missions")
 
@@ -198,7 +198,7 @@ class CheckIn(Base):
     account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False)
     date = Column(Date, nullable=False)
     duration_seconds = Column(Integer, nullable=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
 
     account = relationship("Account", back_populates="check_ins")
 
@@ -215,7 +215,7 @@ class Review(Base):
     completed_at = Column(DateTime, nullable=False)
     duration_seconds = Column(Integer, nullable=True)
     notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
 
     account = relationship("Account", back_populates="reviews")
     period = relationship("BudgetPeriod", back_populates="reviews")
@@ -234,7 +234,7 @@ class Milestone(Base):
     link_type = Column(String(50), nullable=True)
     link_id = Column(Integer, nullable=True)
     celebrated = Column(Boolean, nullable=False, default=False)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
 
     account = relationship("Account", back_populates="milestones")
 
@@ -247,8 +247,8 @@ class AssetAccount(Base):
     name = Column(String(255), nullable=False)  # 'Checking', 'Savings', 'Cash'
     balance_cents = Column(Integer, nullable=False)  # Manually updated snapshot
     is_active = Column(Boolean, nullable=False, default=True)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
 
     account = relationship("Account", back_populates="asset_accounts")
 
@@ -266,6 +266,6 @@ class NetWorthSnapshot(Base):
     net_worth_cents = Column(Integer, nullable=False)
     total_assets_cents = Column(Integer, nullable=False)
     total_debt_cents = Column(Integer, nullable=False)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
 
     account = relationship("Account", back_populates="net_worth_snapshots")

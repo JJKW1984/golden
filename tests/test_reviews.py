@@ -1,5 +1,5 @@
 import os
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, UTC
 from finapp.models import Settings, Review, BudgetCategory, BudgetAllocation, BudgetPeriod
 from finapp.services.ledger import create_transaction
 from finapp.services.seeds import seed_default_categories
@@ -64,7 +64,7 @@ def test_review_streak_counts_consecutive_completed_weeks(db, ctx, account):
         week_start = today - timedelta(days=today.weekday() + 7 * weeks_ago)
         review = Review(
             account_id=ctx.account_id, review_type="weekly", week_start=week_start,
-            prompt_shown="done", completed_at=datetime.utcnow(),
+            prompt_shown="done", completed_at=datetime.now(UTC),
         )
         db.add(review)
     db.commit()

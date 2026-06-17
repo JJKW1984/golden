@@ -205,6 +205,9 @@ def _get_this_week_pulse(ctx: AccountContext) -> dict:
             "spent_cents": 0,
             "target_cents": 0,
             "percentage": 0,
+            "usage_percentage": 0,
+            "is_over_budget": False,
+            "remaining_cents": 0,
         }
 
     # Sum all spending transactions this week
