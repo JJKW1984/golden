@@ -6,6 +6,8 @@ from finapp.routers import allocation, dashboard, budget, transactions, debt, sa
 
 app = FastAPI(title="Personal Finance App")
 
+app.mount("/static", StaticFiles(directory="finapp/static"), name="static")
+
 templates = Jinja2Templates(directory="finapp/templates")
 
 # Register routers
