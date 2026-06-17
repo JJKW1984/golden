@@ -2,9 +2,14 @@ import subprocess
 import sys
 import webbrowser
 import time
+import os
 
 
 def main():
+    # Ensure repo root is in sys.path so uvicorn can import finapp
+    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if repo_root not in sys.path:
+        sys.path.insert(0, repo_root)
     print("Running Alembic migrations...")
     result = subprocess.run(
         [sys.executable, "-m", "alembic", "upgrade", "head"],

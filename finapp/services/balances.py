@@ -166,11 +166,12 @@ def get_days_of_expenses_coverage(ctx: AccountContext, goal_id: int) -> tuple[in
     ).all()
 
     earliest_date = min((t.date for t in spending_txns), default=None)
-    days_with_data = (today - earliest_date).days + 1 if earliest_date else 0
+    latest_date = max((t.date for t in spending_txns), default=None)
+    days_with_data = (latest_date - earliest_date).days + 1 if earliest_date else 0
 
     if days_with_data >= 30:
         total_spent = sum(t.amount_cents for t in spending_txns)
-        daily_avg = total_spent // days_back
+        daily_avg = total_spent // days_with_data
         estimated = False
     else:
         target_total = get_current_period_spending_target_cents(ctx)
