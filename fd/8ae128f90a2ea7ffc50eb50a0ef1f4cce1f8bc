@@ -1,0 +1,26 @@
+CLAUDE.md
+  s_0f49751360bf43::t_364ee43b8456a6 117-119,121,127,130,133-139,142,145,148
+pyproject.toml
+  s_0f49751360bf43::t_8a78ed26d3f13c 24-26
+  s_0f49751360bf43::t_c3a14a6a775113 1-23,27-28
+.python-version
+  s_0f49751360bf43::t_cf147eb2177aca 1
+start.bat
+  s_0f49751360bf43::t_a3baee32cfc6da 2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "fd8ae128f90a2ea7ffc50eb50a0ef1f4cce1f8bc",
+  "prompts": {},
+  "sessions": {
+    "s_0f49751360bf43": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "da5a6d7c-f1da-4a00-894e-635437becb03",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    }
+  }
+}
