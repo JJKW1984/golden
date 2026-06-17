@@ -1,0 +1,29 @@
+tests/integration/test_phase5_flows.py
+  s_cd319717009672::t_a32937371ce739 8
+  s_cd319717009672::t_a88fa568d4f2d5 74,81
+  s_cd319717009672::t_4bb827b610d67f 228-231,233-234
+  s_cd319717009672::t_bb882fb06c95b9 380
+  s_cd319717009672::t_36f27d900d5bbf 412
+  s_cd319717009672::t_fdd588936e1502 73,78-79
+tests/test_dashboard.py
+  s_cd319717009672::t_0192dccaa4ac2b 134,136,138-139,141,149,151,153-154,156
+  s_cd319717009672::t_a0e4d6187d1b3e 131-132,137,140,146,150,152
+tests/test_overage.py
+  s_cd319717009672::t_0ec7b29836f492 140-147
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "44435800300de5341ce369e890c34e47aef1933c",
+  "prompts": {},
+  "sessions": {
+    "s_cd319717009672": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a560b5b1-f4b1-4d95-9759-c9a8e54a0fa2",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    }
+  }
+}
