@@ -690,6 +690,11 @@
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const body = document.body;
+
+            if (!sidebar || !body) {
+                return;
+            }
+
             const isCollapsed = sidebar.classList.toggle('collapsed');
 
             if (isCollapsed) {
@@ -737,6 +742,9 @@
          */
         function openAddTransactionModal() {
             const modal = document.getElementById('add-transaction-modal');
+            if (!modal) {
+                return;
+            }
             modal.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         }
@@ -752,6 +760,9 @@
             }
 
             const modal = document.getElementById('add-transaction-modal');
+            if (!modal) {
+                return;
+            }
             modal.classList.add('hidden');
             document.body.style.overflow = 'auto';
         }
