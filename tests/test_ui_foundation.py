@@ -275,3 +275,28 @@ class TestSidebarCollapseSwitch:
 
     def test_switch_has_sliding_knob(self):
         assert "collapse-knob" in self.content
+
+    def test_switch_updates_accessible_action_text(self):
+        assert 'id="collapse-label"' in self.content
+        assert "setAttribute('aria-label', `${action} sidebar`)" in self.content
+        assert "setAttribute('title', `${action} sidebar`)" in self.content
+        assert "label.textContent = action" in self.content
+
+    def test_sidebar_initializes_before_load_event(self):
+        assert 'onload="initializeSidebar()"' not in self.content
+        assert "initializeSidebar();" in self.content
+
+
+class TestOnboardingThemeAssets:
+    @pytest.fixture(autouse=True)
+    def html(self):
+        self.content = (Path(__file__).parent.parent / "finapp" / "templates" / "onboarding.html").read_text()
+
+    def test_links_theme_js(self):
+        assert 'src="/static/theme.js"' in self.content
+
+    def test_theme_js_before_tailwind(self):
+        theme_js_pos = self.content.index('/static/theme.js')
+        tailwind_pos = self.content.index('https://cdn.tailwindcss.com')
+        assert theme_js_pos < tailwind_pos, \
+            "theme.js must appear before Tailwind CDN script in onboarding.html"

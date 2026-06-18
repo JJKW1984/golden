@@ -32,17 +32,17 @@
         </div>
 
         {% if emergency.is_complete %}
-        <p class="text-teal-800 font-semibold">You've reached your emergency fund target.</p>
+        <p class="text-teal font-semibold">You've reached your emergency fund target.</p>
         {% elif emergency.est_complete_date %}
         <p class="text-primary-color">Estimated complete: {{ emergency.est_complete_date }}</p>
         {% endif %}
 
         <div class="flex gap-2 flex-wrap mt-4">
-            <button class="bg-teal-500 hover:bg-teal-600 text-white px-6 py-2 rounded font-medium"
+            <button class="btn btn-primary px-6 py-2"
                     onclick="openContributionModal({{ emergency.id }})">
                 Add Contribution
             </button>
-            <button class="px-6 py-2 rounded font-medium" style="background-color: var(--bg-tertiary); color: var(--text-primary);"
+            <button class="btn btn-secondary px-6 py-2"
                     onclick="openWithdrawalModal({{ emergency.id }})">
                 Withdraw
             </button>
@@ -62,15 +62,15 @@
                 </div>
                 <div class="text-right">
                     <p class="font-semibold">{{ goal.percent_complete }}%</p>
-                    {% if goal.is_complete %}<p class="text-teal-700 text-xs">Complete</p>{% endif %}
+                    {% if goal.is_complete %}<p class="text-teal text-xs">Complete</p>{% endif %}
                 </div>
             </div>
             <div class="flex gap-2 mt-3">
-                <button class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-1.5 rounded text-sm font-medium"
+                <button class="btn btn-primary px-4 py-1.5 text-sm"
                         onclick="openContributionModal({{ goal.id }})">
                     Add Contribution
                 </button>
-                <button class="px-4 py-1.5 rounded text-sm font-medium" style="background-color: var(--bg-tertiary); color: var(--text-primary);"
+                <button class="btn btn-secondary px-4 py-1.5 text-sm"
                         onclick="openWithdrawalModal({{ goal.id }})">
                     Withdraw
                 </button>

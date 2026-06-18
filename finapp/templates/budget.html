@@ -15,15 +15,15 @@
                 <div class="text-sm text-muted">Income</div>
                 <div class="text-2xl font-bold">${{ (current_summary.income_received_cents / 100) | round(2) }}</div>
             </div>
-            <div class="bg-green-50 p-4 rounded">
+            <div class="card-accent card-accent-success p-4 rounded">
                 <div class="text-sm text-muted">Allocated</div>
                 <div class="text-2xl font-bold">${{ (current_summary.total_target_cents / 100) | round(2) }}</div>
             </div>
-            <div class="bg-orange-50 p-4 rounded">
+            <div class="card-accent card-accent-gold p-4 rounded">
                 <div class="text-sm text-muted">Spent</div>
                 <div class="text-2xl font-bold">${{ (current_summary.total_spent_cents / 100) | round(2) }}</div>
             </div>
-            <div class="bg-teal-50 p-4 rounded">
+            <div class="card-accent card-accent-teal p-4 rounded">
                 <div class="text-sm text-muted">Remaining</div>
                 <div class="text-2xl font-bold">${{ (current_summary.total_remaining_cents / 100) | round(2) }}</div>
             </div>
@@ -45,7 +45,7 @@
                     <td class="py-2">{{ cat.category_name }}</td>
                     <td class="py-2 text-right">${{ (cat.target_cents / 100) | round(2) }}</td>
                     <td class="py-2 text-right">${{ (cat.spent_cents / 100) | round(2) }}</td>
-                    <td class="py-2 text-right {% if cat.is_overspent %}text-amber-700 font-semibold{% endif %}">${{ (cat.remaining_cents / 100) | round(2) }}</td>
+                    <td class="py-2 text-right {% if cat.is_overspent %}text-warning font-semibold{% endif %}">${{ (cat.remaining_cents / 100) | round(2) }}</td>
                 </tr>
                 {% endfor %}
             </tbody>

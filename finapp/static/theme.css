@@ -237,6 +237,12 @@ h3 { font-size: 1.125rem; font-weight: 700; line-height: 1.2; }  /* 18px */
   color: var(--color-gold);
 }
 
+.card-accent-success {
+  background-color: var(--color-success-light);
+  border: 1px solid var(--color-success);
+  color: var(--color-success);
+}
+
 /* Interactive card hover effect */
 .card-interactive {
   cursor: pointer;
@@ -546,6 +552,10 @@ h3 { font-size: 1.125rem; font-weight: 700; line-height: 1.2; }  /* 18px */
   font-size: 0.75rem;
   font-weight: 700;
   border-radius: 999px;
+}
+
+.progress-step-active {
+  background-color: var(--color-teal);
 }
 
 /* --------------------------------------------------------------------------

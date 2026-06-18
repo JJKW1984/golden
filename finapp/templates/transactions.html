@@ -82,7 +82,7 @@
                             <td class="px-6 py-4 text-sm text-primary-color">{{ txn.category_name }}</td>
                             <td class="px-6 py-4 text-sm text-muted">{{ txn.memo or "-" }}</td>
                             <td class="px-6 py-4 text-sm text-muted">{{ txn.mood_tag or "-" }}</td>
-                            <td class="px-6 py-4 text-sm text-right font-medium {% if txn.direction == 'out' %}text-amber-700{% else %}text-teal-600{% endif %}">
+                            <td class="px-6 py-4 text-sm text-right font-medium {% if txn.direction == 'out' %}text-warning{% else %}text-success{% endif %}">
                                 {% if txn.direction == 'out' %}-{% endif %}${{ (txn.amount_cents / 100)|round(2) }}
                             </td>
                         </tr>

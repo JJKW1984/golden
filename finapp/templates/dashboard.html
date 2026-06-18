@@ -12,12 +12,12 @@
     </div>
 
     <!-- Streak Card: Prominent Display -->
-    <div class="bg-gradient-to-br from-teal-50 to-sky-50 rounded-xl shadow-md p-8 mb-8 border border-teal-100">
+    <div class="card-accent card-accent-teal rounded-xl shadow-md p-8 mb-8">
         <div class="flex items-center gap-4">
             <div class="text-6xl">🔥</div>
             <div>
                 <p class="text-sm font-medium text-muted uppercase tracking-wide">Current Streak</p>
-                <p class="text-5xl font-bold text-teal-600 mt-1">{{ dashboard.streak }}</p>
+                <p class="text-5xl font-bold text-teal mt-1">{{ dashboard.streak }}</p>
                 <p class="text-sm text-muted mt-2">
                     {% if dashboard.streak > 0 %}
                         You're doing great! Keep checking in daily.
@@ -37,8 +37,8 @@
 
         <!-- Progress Bar -->
         <div class="rounded-full h-3 mb-3 overflow-hidden" style="background-color: var(--bg-tertiary)">
-            <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-300"
-                 style="width: {{ dashboard.current_mission.progress }}%;"></div>
+            <div class="h-3 rounded-full transition-all duration-300"
+                 style="width: {{ dashboard.current_mission.progress }}%; background: linear-gradient(90deg, var(--color-info), var(--color-teal));"></div>
         </div>
 
         <!-- Progress Stats -->
@@ -83,17 +83,17 @@
 
             <!-- Progress Bar with Color Coding -->
             <div class="rounded-full h-4 mb-2 overflow-hidden" style="background-color: var(--bg-tertiary)">
-                <div class="{% if pulse.is_over_budget %}bg-gradient-to-r from-amber-400 to-amber-600{% else %}bg-gradient-to-r from-teal-400 to-teal-600{% endif %} h-4 rounded-full transition-all duration-300"
-                     style="width: {{ pulse.percentage }}%;"></div>
+                <div class="h-4 rounded-full transition-all duration-300"
+                     style="width: {{ pulse.percentage }}%; background: {% if pulse.is_over_budget %}linear-gradient(90deg, var(--color-warning), var(--color-gold)){% else %}linear-gradient(90deg, var(--color-teal), var(--color-success)){% endif %};"></div>
             </div>
 
             <!-- Status Text -->
             <div class="flex justify-between items-center text-sm">
                 <span class="font-semibold page-title">{{ pulse.usage_percentage }}% used</span>
                 {% if pulse.is_over_budget %}
-                    <span class="text-amber-600 font-medium">Over by ${{ ((0 - remaining_cents) / 100) | round(2) }}</span>
+                    <span class="text-warning font-medium">Over by ${{ ((0 - remaining_cents) / 100) | round(2) }}</span>
                 {% else %}
-                    <span class="text-teal-600 font-medium">Remaining ${{ (remaining_cents / 100) | round(2) }}</span>
+                    <span class="text-teal font-medium">Remaining ${{ (remaining_cents / 100) | round(2) }}</span>
                 {% endif %}
             </div>
         </div>

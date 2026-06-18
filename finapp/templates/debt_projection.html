@@ -12,7 +12,7 @@
     <!-- Scenario Cards -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         {% for scenario in scenarios %}
-        <div class="border rounded-lg p-4 {% if scenario.name == 'minimum' %}bg-red-50 border-red-300{% elif scenario.name == '+$50' %}bg-yellow-50 border-yellow-300{% else %}bg-green-50 border-green-300{% endif %}">
+        <div class="card-accent rounded-lg p-4 {% if scenario.name == 'minimum' %}card-accent-gold{% elif scenario.name == '+$50' %}card-accent-info{% else %}card-accent-success{% endif %}">
             <h3 class="font-bold text-lg mb-2">{{ scenario.name }}</h3>
             <p class="text-muted text-sm mb-1">Payment: ${{ "%.2f"|format(scenario.payment) }}/month</p>
 
@@ -32,7 +32,7 @@
                 </div>
                 {% endif %}
                 {% if not scenario.payment_gte_interest %}
-                <p class="text-amber-700 text-xs font-semibold">Payment only covers interest</p>
+                <p class="text-warning text-xs font-semibold">Payment only covers interest</p>
                 {% endif %}
             </div>
         </div>

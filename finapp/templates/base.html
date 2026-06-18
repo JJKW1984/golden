@@ -148,11 +148,11 @@
         }
 
         /* Sidebar nav item labels - hide when collapsed */
-        #sidebar-nav .nav-label {
+        #sidebar .nav-label {
             display: inline;
         }
 
-        #sidebar.collapsed #sidebar-nav .nav-label {
+        #sidebar.collapsed .nav-label {
             display: none;
         }
 
@@ -208,7 +208,8 @@
         }
 
         .badge-count {
-            @apply inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-amber-500 rounded-full;
+            @apply inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white rounded-full;
+            background-color: var(--color-warning);
         }
 
         /* Responsive adjustments */
@@ -477,7 +478,7 @@
     {% block extra_css %}{% endblock %}
 </head>
 
-<body onload="initializeSidebar()">
+<body>
     <!-- Sidebar (desktop) -->
     <aside id="sidebar">
         <div id="sidebar-header" class="px-6 py-6 flex items-start justify-between" style="border-bottom: 1px solid var(--border-color);">
@@ -551,7 +552,7 @@
                 <span class="collapse-knob" id="collapse-knob">
                     <span id="toggle-icon">‹</span>
                 </span>
-                <span class="nav-label" style="margin-left: 2.25rem;">Collapse</span>
+                <span id="collapse-label" class="nav-label" style="margin-left: 2.25rem;">Collapse</span>
             </button>
         </div>
     </aside>
@@ -672,11 +673,13 @@
             const sidebar = document.getElementById('sidebar');
             const body = document.body;
 
-            if (isCollapsed) {
-                sidebar.classList.add('collapsed');
-                body.classList.add('sidebar-collapsed');
-                updateToggleIcon();
+            if (!sidebar) {
+                return;
             }
+
+            sidebar.classList.toggle('collapsed', isCollapsed);
+            body.classList.toggle('sidebar-collapsed', isCollapsed);
+            updateToggleIcon();
         }
 
         /**
@@ -704,11 +707,24 @@
         function updateToggleIcon() {
             const sidebar = document.getElementById('sidebar');
             const icon = document.getElementById('toggle-icon');
-            if (sidebar.classList.contains('collapsed')) {
+            const toggleButton = document.getElementById('btn-collapse-switch');
+            const label = document.getElementById('collapse-label');
+
+            if (!sidebar || !icon || !toggleButton || !label) {
+                return;
+            }
+
+            const action = sidebar.classList.contains('collapsed') ? 'Expand' : 'Collapse';
+
+            if (action === 'Expand') {
                 icon.textContent = '›'; // Right chevron when collapsed
             } else {
                 icon.textContent = '‹'; // Left chevron when expanded
             }
+
+            toggleButton.setAttribute('aria-label', `${action} sidebar`);
+            toggleButton.setAttribute('title', `${action} sidebar`);
+            label.textContent = action;
         }
 
         /**
@@ -765,7 +781,10 @@
             });
         }
 
-        // Initialize on page load
+        // Initialize sidebar state immediately once the sidebar DOM exists.
+        initializeSidebar();
+
+        // Initialize remaining DOM-dependent behavior on page load.
         document.addEventListener('DOMContentLoaded', setActiveNav);
     </script>
 

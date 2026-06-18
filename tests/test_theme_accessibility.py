@@ -148,8 +148,10 @@ TEMPLATES_DIR = REPO_ROOT / "finapp" / "templates"
 
 # Color-bearing Tailwind tokens that must not appear in any template after conversion.
 FORBIDDEN = re.compile(
-    r"\b(?:text-gray-\d{2,3}|bg-gray-\d{2,3}|border-gray-\d{2,3}"
-    r"|divide-gray-\d{2,3}|text-blue-\d{2,3}|bg-blue-\d{2,3}|bg-white)\b"
+    r"\b(?:"
+    r"(?:text|bg|border|divide|from|to)-(?:gray|blue|teal|amber|green|orange|red|yellow|sky)-\d{2,3}"
+    r"|bg-white"
+    r")\b"
 )
 
 
