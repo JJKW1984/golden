@@ -196,7 +196,9 @@ def _resolve_direction(amount_decimal, direction_raw, has_direction_col, spent_i
     return "out" if value > 0 else "in"
 
 
-def normalize_rows(rows: list[dict], column_map: dict, spent_is_negative: bool = True) -> list[dict]:
+def normalize_rows(
+    rows: list[dict], column_map: dict, spent_is_negative: bool = True
+) -> list[dict]:
     """Normalize raw CSV rows into the shared normalized-row schema.
 
     Records per-row parse problems in 'issues' instead of aborting the batch.
