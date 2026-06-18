@@ -1,0 +1,19 @@
+.gitignore
+  s_74b1fc22f6ec6c::t_fc5ce036b941d2 33-34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "8976477dcd4fc1cbb3fcb00685d9ce95fdd7911f",
+  "prompts": {},
+  "sessions": {
+    "s_74b1fc22f6ec6c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7275d8ee-63f6-4da9-b639-e89d4834e5c8",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    }
+  }
+}
