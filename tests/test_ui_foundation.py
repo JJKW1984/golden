@@ -251,3 +251,27 @@ class TestStaticFilesServed:
         content_type = response.headers.get("content-type", "")
         # application/javascript or text/javascript
         assert "javascript" in content_type
+
+
+class TestSidebarCollapseSwitch:
+    @pytest.fixture(autouse=True)
+    def html(self):
+        self.content = (Path(__file__).parent.parent / "finapp" / "templates" / "base.html").read_text()
+
+    def test_collapse_switch_present(self):
+        assert "btn-collapse-switch" in self.content
+
+    def test_collapse_switch_is_after_add_transaction(self):
+        # Add Transaction must appear before the collapse switch (switch is last).
+        add_pos = self.content.index("openAddTransactionModal()")
+        switch_pos = self.content.index("btn-collapse-switch")
+        assert add_pos < switch_pos, "collapse switch must be the last sidebar element"
+
+    def test_add_transaction_in_nav(self):
+        # Add Transaction now lives inside the nav list, not a separate footer.
+        nav_start = self.content.index('id="sidebar-nav"')
+        nav_end = self.content.index("</nav>", nav_start)
+        assert "openAddTransactionModal()" in self.content[nav_start:nav_end]
+
+    def test_switch_has_sliding_knob(self):
+        assert "collapse-knob" in self.content
