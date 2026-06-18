@@ -264,7 +264,7 @@ class TestSidebarCollapseSwitch:
     def test_collapse_switch_is_after_add_transaction(self):
         # Add Transaction must appear before the collapse switch (switch is last).
         add_pos = self.content.index("openAddTransactionModal()")
-        switch_pos = self.content.index("btn-collapse-switch")
+        switch_pos = self.content.index('id="btn-collapse-switch"')
         assert add_pos < switch_pos, "collapse switch must be the last sidebar element"
 
     def test_add_transaction_in_nav(self):

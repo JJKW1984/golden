@@ -416,6 +416,56 @@
                 padding: 2rem;
             }
         }
+
+        /* Full-width sliding collapse switch (last sidebar element) */
+        .btn-collapse-switch {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+            height: 40px;
+            padding: 0 0.5rem;
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: background-color var(--transition-normal);
+            overflow: hidden;
+        }
+
+        .btn-collapse-switch:hover {
+            background-color: var(--bg-secondary);
+        }
+
+        .collapse-knob {
+            position: absolute;
+            left: 6px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 999px;
+            background-color: var(--bg-primary);
+            box-shadow: var(--shadow-sm);
+            transition: left var(--transition-slow);
+            flex-shrink: 0;
+        }
+
+        /* Expanded: knob at left, label visible to the right */
+        #sidebar:not(.collapsed) .collapse-knob {
+            left: 6px;
+        }
+
+        /* Collapsed: sidebar is ~80px wide; slide knob to right end of track */
+        #sidebar.collapsed .collapse-knob {
+            left: calc(100% - 34px);
+        }
+
+        #sidebar.collapsed .btn-collapse-switch {
+            justify-content: center;
+        }
     </style>
 
     {% block extra_css %}{% endblock %}
@@ -495,59 +545,10 @@
                 <span class="collapse-knob" id="collapse-knob">
                     <span id="toggle-icon">‹</span>
                 </span>
-                <span class="collapse-label nav-label">Collapse</span>
+                <span class="nav-label" style="margin-left: 2.25rem;">Collapse</span>
             </button>
         </div>
     </aside>
-    <style>
-        /* Full-width sliding collapse switch (last sidebar element) */
-        .btn-collapse-switch {
-            position: relative;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            width: 100%;
-            height: 40px;
-            padding: 0 0.5rem;
-            background-color: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            border-radius: 999px;
-            color: var(--text-primary);
-            cursor: pointer;
-            transition: background-color var(--transition-normal);
-        }
-        .btn-collapse-switch:hover {
-            background-color: var(--bg-secondary);
-        }
-        .collapse-knob {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 28px;
-            height: 28px;
-            border-radius: 999px;
-            background-color: var(--bg-primary);
-            box-shadow: var(--shadow-sm);
-            transition: transform var(--transition-slow);
-        }
-        /* Collapsed: slide the knob to the right end of the track (toggle-switch feel). */
-        #sidebar.collapsed .btn-collapse-switch {
-            justify-content: center;
-        }
-        #sidebar.collapsed .collapse-knob {
-            transform: translateX(0);
-        }
-        .btn-collapse-switch .collapse-knob {
-            transform: translateX(0);
-        }
-        /* When expanded the knob rests at the start; when collapsed it slides across. */
-        #sidebar:not(.collapsed) .collapse-knob {
-            transform: translateX(0);
-        }
-        #sidebar.collapsed .collapse-knob {
-            transform: translateX(calc(100% + 0.5rem));
-        }
-    </style>
 
     <!-- Bottom Navigation (mobile) -->
     <nav id="bottom-nav">
