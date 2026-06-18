@@ -554,7 +554,7 @@ h3 { font-size: 1.125rem; font-weight: 700; line-height: 1.2; }  /* 18px */
   border-radius: 999px;
 }
 
-.progress-step-active {
+.onboarding-progress-step-active {
   background-color: var(--color-teal);
 }
 

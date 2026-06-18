@@ -290,6 +290,12 @@ class TestSidebarCollapseSwitch:
         assert 'onload="initializeSidebar()"' not in self.content
         assert "initializeSidebar();" in self.content
 
+    def test_sidebar_initializer_is_called_after_definition(self):
+        definition_pos = self.content.index("function initializeSidebar()")
+        init_call_pos = self.content.rindex("initializeSidebar();")
+        script_end_pos = self.content.index("</script>", init_call_pos)
+        assert definition_pos < init_call_pos < script_end_pos
+
 
 class TestOnboardingThemeAssets:
     @pytest.fixture(autouse=True)
