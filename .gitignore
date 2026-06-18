@@ -7,7 +7,7 @@ __pycache__/
 dist/
 build/
 .env
-finance.db
+finance.db*
 backups/
 .pytest_cache/
 .venv/
@@ -30,5 +30,3 @@ coverage.xml
 # OS
 .DS_Store
 Thumbs.db
-
-finance.db
