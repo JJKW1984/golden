@@ -150,3 +150,84 @@ def test_load_expired_draft_raises_expired(import_ctx):
     import_ctx.db.commit()
     with pytest.raises(DraftExpiredError):
         load_draft(import_ctx, draft.id)
+
+
+from finapp.services.csv_import import confirm_import
+from finapp.models import Transaction
+
+
+def _preview_rows():
+    return [
+        {"row_id": 0, "date": "2026-06-01", "amount_cents": 4500, "direction": "out",
+         "payee": "Coffee", "import_hash": None, "is_duplicate": False,
+         "selected": True, "issues": [], "valid": True},
+        {"row_id": 1, "date": "2026-06-02", "amount_cents": 150000, "direction": "in",
+         "payee": "Paycheck", "import_hash": None, "is_duplicate": False,
+         "selected": True, "issues": [], "valid": True},
+        {"row_id": 2, "date": "bad", "amount_cents": 0, "direction": "out",
+         "payee": "Broken", "import_hash": None, "is_duplicate": False,
+         "selected": False, "issues": ["date"], "valid": False},
+    ]
+
+
+def _make_draft(ctx):
+    # import_hash is recomputed on confirm, so None placeholders above are fine.
+    return create_draft(ctx, {"date": "Date"}, True, _preview_rows())
+
+
+def test_confirm_imports_only_selected_valid_rows(import_ctx):
+    draft = _make_draft(import_ctx)
+    summary = confirm_import(import_ctx, draft.id, selected_row_ids=[0, 1], edits={})
+    assert summary["imported_count"] == 2
+    assert summary["skipped_unselected_count"] == 1  # row 2 not selected
+    txns = import_ctx.db.query(Transaction).filter_by(account_id=import_ctx.account_id).all()
+    assert len(txns) == 2
+    assert all(t.is_imported for t in txns)
+
+
+def test_confirm_skips_selected_invalid_row(import_ctx):
+    draft = _make_draft(import_ctx)
+    summary = confirm_import(import_ctx, draft.id, selected_row_ids=[0, 2], edits={})
+    assert summary["imported_count"] == 1
+    assert summary["skipped_invalid_count"] == 1
+    assert any(e["row_id"] == 2 and e["reason"] == "invalid" for e in summary["errors"])
+
+
+def test_confirm_redups_against_current_db(import_ctx):
+    # Row 0 becomes a duplicate of a txn created AFTER the preview was built.
+    create_transaction(import_ctx, date=_date(2026, 6, 1), amount_cents=4500,
+                       direction="out", payee="Coffee", is_imported=True)
+    draft = _make_draft(import_ctx)
+    summary = confirm_import(import_ctx, draft.id, selected_row_ids=[0, 1], edits={})
+    assert summary["imported_count"] == 1          # only the paycheck
+    assert summary["skipped_duplicate_count"] == 1  # coffee now a dup
+
+
+def test_confirm_applies_edits_and_revalidates(import_ctx):
+    draft = _make_draft(import_ctx)
+    # Fix the broken row 2's date via an edit, then select it.
+    summary = confirm_import(
+        import_ctx, draft.id, selected_row_ids=[2],
+        edits={"2": {"date": "2026-06-05", "amount": "12.50", "direction": "out", "payee": "Fixed"}},
+    )
+    assert summary["imported_count"] == 1
+    txn = import_ctx.db.query(Transaction).filter_by(payee="Fixed").first()
+    assert txn is not None
+    assert txn.amount_cents == 1250
+    assert txn.date == _date(2026, 6, 5)
+
+
+def test_confirm_ignores_unknown_row_ids(import_ctx):
+    draft = _make_draft(import_ctx)
+    summary = confirm_import(import_ctx, draft.id, selected_row_ids=[0, 999],
+                             edits={"888": {"payee": "Ghost"}})
+    assert summary["imported_count"] == 1
+    assert 999 in summary["ignored_row_ids"]
+    assert 888 in summary["ignored_row_ids"]
+
+
+def test_confirm_deletes_draft(import_ctx):
+    draft = _make_draft(import_ctx)
+    confirm_import(import_ctx, draft.id, selected_row_ids=[0], edits={})
+    with pytest.raises(DraftNotFoundError):
+        load_draft(import_ctx, draft.id)

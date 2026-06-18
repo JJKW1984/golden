@@ -14,7 +14,7 @@ from decimal import Decimal, InvalidOperation
 from finapp.deps import AccountContext
 from finapp.money import to_cents
 from finapp.models import Transaction, ImportDraft
-from finapp.services.ledger import compute_import_hash
+from finapp.services.ledger import compute_import_hash, create_transaction
 
 
 _OUT_WORDS = {"debit", "withdrawal", "payment", "out", "expense", "w"}
@@ -358,3 +358,118 @@ def load_draft(ctx: AccountContext, draft_id: int) -> ImportDraft:
     if _utcnow_naive() > draft.expires_at:
         raise DraftExpiredError(draft_id)
     return draft
+
+
+def _apply_edit(row: dict, edit: dict) -> dict:
+    """Return a new normalized row with edit fields applied and issues +
+    import_hash recomputed. edit may carry date (str), amount (display string),
+    direction ('in'/'out'), payee (str). Missing keys keep the existing value."""
+    new = dict(row)
+
+    date_str = edit.get("date", row["date"])
+    payee = edit.get("payee", row["payee"]) or ""
+    direction = edit.get("direction", row["direction"])
+
+    if "amount" in edit and edit["amount"] is not None:
+        amount_decimal = _safe_parse_amount(str(edit["amount"]))
+        amount_cents = to_cents(abs(amount_decimal)) if amount_decimal is not None else None
+    else:
+        amount_cents = row["amount_cents"]
+
+    issues = []
+    parsed_date = _safe_parse_date(date_str) if date_str else None
+    if parsed_date is None:
+        issues.append("date")
+    if amount_cents is None:
+        issues.append("amount")
+    if direction not in ("in", "out"):
+        issues.append("direction")
+
+    valid = not issues
+    new["date"] = parsed_date.isoformat() if parsed_date else date_str
+    new["amount_cents"] = amount_cents if amount_cents is not None else 0
+    new["direction"] = direction
+    new["payee"] = payee
+    new["issues"] = issues
+    new["valid"] = valid
+    new["import_hash"] = (
+        compute_import_hash(parsed_date, new["amount_cents"], payee) if valid else None
+    )
+    return new
+
+
+def confirm_import(ctx: AccountContext, draft_id: int,
+                   selected_row_ids: list[int], edits: dict) -> dict:
+    """Apply edits, revalidate, re-check dedup against current DB state, import
+    selected valid non-duplicate rows through the ledger, and return a
+    partial-success summary. Deletes the draft on completion."""
+    draft = load_draft(ctx, draft_id)
+    rows = json.loads(draft.rows_json)
+    by_id = {r["row_id"]: r for r in rows}
+
+    ignored_row_ids = []
+
+    # Apply edits (unknown row ids are ignored + reported).
+    for key, edit in (edits or {}).items():
+        rid = int(key)
+        if rid not in by_id:
+            ignored_row_ids.append(rid)
+            continue
+        by_id[rid] = _apply_edit(by_id[rid], edit)
+
+    # Resolve selection (unknown ids ignored + reported).
+    selected = set()
+    for rid in (selected_row_ids or []):
+        if rid in by_id:
+            selected.add(rid)
+        else:
+            ignored_row_ids.append(rid)
+
+    imported = duplicate = invalid = unselected = 0
+    errors = []
+    seen_hashes = set()  # intra-confirm dedup
+
+    for rid, r in by_id.items():
+        if rid not in selected:
+            unselected += 1
+            continue
+        if not r["valid"]:
+            invalid += 1
+            errors.append({"row_id": rid, "reason": "invalid", "issues": r["issues"]})
+            continue
+
+        # Recompute the hash authoritatively from current row fields so confirm
+        # dedup never relies on a possibly-stale stored value.
+        h = compute_import_hash(
+            date.fromisoformat(r["date"]), r["amount_cents"], r["payee"] or ""
+        )
+        db_dup = ctx.db.query(Transaction).filter_by(
+            account_id=ctx.account_id, import_hash=h
+        ).first() is not None
+        if db_dup or h in seen_hashes:
+            duplicate += 1
+            errors.append({"row_id": rid, "reason": "duplicate"})
+            continue
+        seen_hashes.add(h)
+
+        create_transaction(
+            ctx,
+            date=date.fromisoformat(r["date"]),
+            amount_cents=r["amount_cents"],
+            direction=r["direction"],
+            payee=r["payee"] or None,
+            is_imported=True,
+        )
+        imported += 1
+
+    ctx.db.delete(draft)
+    ctx.db.commit()
+
+    return {
+        "imported_count": imported,
+        "skipped_duplicate_count": duplicate,
+        "skipped_invalid_count": invalid,
+        "skipped_unselected_count": unselected,
+        "ignored_row_ids": ignored_row_ids,
+        "errors": errors,
+    }
