@@ -1,0 +1,23 @@
+tests/test_import_draft.py
+  s_24cdc708beb972::t_e26b89c7350d66 38-86
+finapp/services/csv_import.py
+  s_24cdc708beb972::t_fb64aed3493988 167-251
+  s_24cdc708beb972::t_59200720ebec63 99-103
+  s_24cdc708beb972::t_7f6ebae96eb8a5 11,19-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "8893a4afc0ccffef9880126aa8ccbcbf110b5d0b",
+  "prompts": {},
+  "sessions": {
+    "s_24cdc708beb972": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "65397869-a69a-405f-9719-3ad9822ef041",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    }
+  }
+}
