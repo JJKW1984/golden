@@ -1,0 +1,64 @@
+finapp/templates/debt_projection.html
+  s_710b0e62da86bf::t_0e85cad4ab9ed6 7
+  s_710b0e62da86bf::t_54861446f65c37 10,17,19,21,25,30,43
+finapp/templates/transactions.html
+  s_710b0e62da86bf::t_e0b9eb2ae2af25 15-16,20-21,31-32,44-45,50-51,56,64,66,68-73,76,79-84,92,94
+  s_710b0e62da86bf::t_594e545d887d08 10-11
+finapp/templates/budget.html
+  s_710b0e62da86bf::t_c8404b176c6184 10,14-15,19,23,27,44,56-58
+finapp/templates/reviews.html
+  s_710b0e62da86bf::t_5f13e641fcde17 8
+finapp/templates/onboarding.html
+  s_710b0e62da86bf::t_a7e4cbccf3ec6b 11
+  s_710b0e62da86bf::t_d1e2ddf47462c6 19-20,24
+  s_710b0e62da86bf::t_bc1b18b0a44047 29,57,84,103,120,146
+  s_710b0e62da86bf::t_5efb61d7a08292 64
+  s_710b0e62da86bf::t_445f0bcf9eb71f 66
+  s_710b0e62da86bf::t_2020a292f55878 7
+finapp/templates/assets.html
+  s_710b0e62da86bf::t_4f6a8995561989 8,13,16,18,26-27,31
+finapp/templates/savings.html
+  s_710b0e62da86bf::t_3af152e2508a21 10,15,19,23,27,37,45,57,61,73,84-85
+finapp/templates/dashboard.html
+  s_710b0e62da86bf::t_aba05fe532b71e 19,21
+  s_710b0e62da86bf::t_dd9ce2ef752608 65-66
+  s_710b0e62da86bf::t_dd3914ff77a5da 34-36,39
+  s_710b0e62da86bf::t_32c3668bd3dc84 10-11
+  s_710b0e62da86bf::t_2d9f2f6c4ce9ac 103-104,106,109,115,119,123,127,131,135,139,144,153,155
+  s_710b0e62da86bf::t_a7c57dd822d5bf 73-74,78-79,85
+  s_710b0e62da86bf::t_e3633f05456112 92
+  s_710b0e62da86bf::t_b00795d8b2fa0d 45,50,55-58
+finapp/templates/settings.html
+  s_710b0e62da86bf::t_a7fa715172b93f 45,49,51,54-55,63,65,68,71
+  s_710b0e62da86bf::t_f325609ee786fc 6,8
+  s_710b0e62da86bf::t_8e1378ff49d2fc 78,80,82,84,91,95,99-100,104,106,109,111,114,116,120-121,128,133,135,146,150,152,156
+  s_710b0e62da86bf::t_11023e57bf6fea 188
+  s_710b0e62da86bf::t_a9bc66603e42a2 19
+finapp/templates/base.html
+  s_710b0e62da86bf::t_6cb25a8f3628de 630,637-638,641-642,646-647,656
+  s_710b0e62da86bf::t_dd48588396448b 168-169,172-173,177-178
+  s_710b0e62da86bf::t_860d581440f123 619-620,622
+  s_710b0e62da86bf::t_28c71c08b46966 170-171,483,485-486
+finapp/templates/debt.html
+  s_710b0e62da86bf::t_8584c718ed1760 11,16,20,24,28,34,39,42,55,60,64,80-81
+tests/test_theme_accessibility.py
+  s_710b0e62da86bf::t_6dab12f612bcaa 141-164
+tests/test_settings.py
+  s_710b0e62da86bf::t_ca03a0ff775303 9-10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "7f6aa2f5dc0d043c68d07124391b757d2d8827a8",
+  "prompts": {},
+  "sessions": {
+    "s_710b0e62da86bf": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cf87ae90-500e-463c-91f0-6e5804135dcd",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    }
+  }
+}
