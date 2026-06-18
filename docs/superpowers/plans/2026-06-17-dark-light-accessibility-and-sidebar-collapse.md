@@ -34,7 +34,7 @@ Build a reusable contrast checker that parses `theme.css` and asserts the text/b
 **Interfaces:**
 - Produces: test module `tests/test_theme_accessibility.py` with helpers `parse_theme_vars(css, selector) -> dict`, `resolve_dark(root, dark) -> dict`, `contrast_ratio(hex_a, hex_b) -> float`. Later tasks add assertions to this file.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/test_theme_accessibility.py`:
 
@@ -134,12 +134,12 @@ def test_text_pairings_meet_aa(themes, theme_name, fg, bg):
     )
 ```
 
-- [ ] **Step 2: Run test to verify it fails (or surfaces a weak token)**
+- [x] **Step 2: Run test to verify it fails (or surfaces a weak token)**
 
 Run: `uv run pytest tests/test_theme_accessibility.py -v`
 Expected: either failures naming specific pairings below 4.5:1 (e.g. `--text-secondary` on `--bg-secondary`), or all pass. The likely offender is light-theme `--text-secondary: #6b7280` on `--bg-secondary: #f9fafb`.
 
-- [ ] **Step 3: Fix any failing token in `finapp/static/theme.css`**
+- [x] **Step 3: Fix any failing token in `finapp/static/theme.css`**
 
 If a light-theme pairing fails, darken the offending text token. Recommended adjustment (only apply if its pairing fails):
 
@@ -150,12 +150,12 @@ If a light-theme pairing fails, darken the offending text token. Recommended adj
 
 Re-check that no *other* pairing regresses. Do not change accent colors (teal/gold/success/warning/danger/info) — those are theme-stable per the spec.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `uv run pytest tests/test_theme_accessibility.py -v`
 Expected: PASS (all parametrized pairings, both themes).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add tests/test_theme_accessibility.py finapp/static/theme.css
@@ -175,7 +175,7 @@ Add the variable-backed classes templates will use so no template needs a raw co
 **Interfaces:**
 - Produces CSS classes consumed by Tasks 3, 5, 6, 7: `.surface`, `.page-title`, `.section-title`, `.input-disabled`, `.link-info`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `tests/test_theme_accessibility.py`:
 
@@ -208,12 +208,12 @@ class TestSemanticClasses:
         assert "var(--border-color)" in body
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `uv run pytest tests/test_theme_accessibility.py::TestSemanticClasses -v`
 Expected: FAIL — classes not found.
 
-- [ ] **Step 3: Add the classes to `finapp/static/theme.css`**
+- [x] **Step 3: Add the classes to `finapp/static/theme.css`**
 
 Append after the Card Components section (near the existing `.card` rule):
 
@@ -256,12 +256,12 @@ Append after the Card Components section (near the existing `.card` rule):
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `uv run pytest tests/test_theme_accessibility.py::TestSemanticClasses -v`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add finapp/static/theme.css tests/test_theme_accessibility.py
@@ -281,7 +281,7 @@ Replace hardcoded colors in the `base.html` `<style>` block (sidebar, bottom-nav
 **Interfaces:**
 - Consumes: variables from `theme.css` (`--bg-primary`, `--bg-secondary`, `--bg-tertiary`, `--text-primary`, `--text-secondary`, `--border-color`, `--color-info`, `--color-info-light`).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `tests/test_theme_accessibility.py`:
 
@@ -305,12 +305,12 @@ class TestBaseChromeThemed:
         assert "var(--border-color)" in style
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `uv run pytest tests/test_theme_accessibility.py::TestBaseChromeThemed -v`
 Expected: FAIL — hardcoded hex values present.
 
-- [ ] **Step 3: Rewrite the `<style>` chrome in `finapp/templates/base.html`**
+- [x] **Step 3: Rewrite the `<style>` chrome in `finapp/templates/base.html`**
 
 In the `<style>` block, replace every hardcoded color with its variable. Apply these substitutions throughout both the primary rules and the fallback block (≈ lines 247–408):
 
@@ -364,12 +364,12 @@ Also convert the `@apply`-based duplicates that name Tailwind colors so the chro
 
 Apply the same pattern to `#bottom-nav`, `#bottom-nav-items`, `#sidebar-footer`, `#sidebar-header`, `.btn-toggle-sidebar`, `.modal-panel`, and the modal header markup colors. The modal header element in the body (`bg-white`) is handled in this task too — change `sticky top-0 bg-white` to use an inline `style="background-color: var(--bg-primary)"` or a `.surface` wrapper, and the `text-gray-900`/`text-gray-500` in the modal to `.section-title`/`.text-muted`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `uv run pytest tests/test_theme_accessibility.py::TestBaseChromeThemed tests/test_ui_foundation.py -v`
 Expected: PASS for the new chrome tests. (Note: `test_ui_foundation.py` theme-toggle-in-base assertions still pass here — the toggle button is removed in Task 5, which updates those tests.)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add finapp/templates/base.html tests/test_theme_accessibility.py
@@ -389,7 +389,7 @@ Extend the theme engine to support `light` | `dark` | `system`, resolving `syste
 **Interfaces:**
 - Produces: globals `window.setTheme(mode)` and `window.getThemeMode()`; keeps `window.toggleTheme()` as a shim. Consumed by Task 5 (Settings control).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Add to `TestThemeJSContent` in `tests/test_ui_foundation.py`:
 
@@ -410,12 +410,12 @@ Add to `TestThemeJSContent` in `tests/test_ui_foundation.py`:
         assert "matchMedia" in self.content
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `uv run pytest tests/test_ui_foundation.py::TestThemeJSContent -v`
 Expected: FAIL — new assertions not satisfied.
 
-- [ ] **Step 3: Rewrite `finapp/static/theme.js`**
+- [x] **Step 3: Rewrite `finapp/static/theme.js`**
 
 Replace the file body with a version that supports `system`:
 
@@ -496,12 +496,12 @@ Replace the file body with a version that supports `system`:
 }());
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `uv run pytest tests/test_ui_foundation.py::TestThemeJSContent -v`
 Expected: PASS (including existing assertions: `toggleTheme`, `dark-theme`, `localStorage.setItem`/`getItem`, `window.toggleTheme`, `'light'` default).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add finapp/static/theme.js tests/test_ui_foundation.py
@@ -523,7 +523,7 @@ Remove the sidebar theme-toggle button; add an Appearance section to `settings.h
 **Interfaces:**
 - Consumes: `window.setTheme(mode)` and `window.getThemeMode()` from Task 4.
 
-- [ ] **Step 1: Write/adjust the failing tests**
+- [x] **Step 1: Write/adjust the failing tests**
 
 In `tests/test_ui_foundation.py`, **replace** the `TestBaseHTMLIntegration` theme-toggle assertions (`test_theme_toggle_button_present`, `test_theme_toggle_calls_toggle_function`, `test_theme_icon_span_present`) with:
 
@@ -559,12 +559,12 @@ class TestAppearanceSection:
         assert "setTheme(" in self.content
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `uv run pytest tests/test_ui_foundation.py::TestBaseHTMLIntegration tests/test_settings.py::TestAppearanceSection -v`
 Expected: FAIL — toggle still in base.html; Appearance section absent.
 
-- [ ] **Step 3: Remove the sidebar theme-toggle button**
+- [x] **Step 3: Remove the sidebar theme-toggle button**
 
 In `finapp/templates/base.html`, delete the theme-toggle button block:
 
@@ -576,7 +576,7 @@ In `finapp/templates/base.html`, delete the theme-toggle button block:
 </button>
 ```
 
-- [ ] **Step 4: Add the Appearance section to `settings.html`**
+- [x] **Step 4: Add the Appearance section to `settings.html`**
 
 Insert as the first section (after the `<header>`), using themed classes:
 
@@ -631,12 +631,12 @@ Add a `.theme-option.active` style to `theme.css` (active = info background) so 
 
 (Convert the `border-gray-200` on the wrapper to a `.surface`-consistent border in Task 7's settings pass; leaving it here is fine until then since it is part of the conversion list.)
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
 Run: `uv run pytest tests/test_ui_foundation.py::TestBaseHTMLIntegration tests/test_settings.py::TestAppearanceSection tests/test_settings.py -v`
 Expected: PASS (and existing `test_settings.py` router tests still pass).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add finapp/templates/base.html finapp/templates/settings.html finapp/static/theme.css tests/test_ui_foundation.py tests/test_settings.py
@@ -656,7 +656,7 @@ Move "Add Transaction" into the nav list and make the footer a single full-width
 **Interfaces:**
 - Consumes: existing `toggleSidebar()` / `initializeSidebar()` JS (kept; extended to slide the knob).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append a class to `tests/test_ui_foundation.py`:
 
@@ -685,12 +685,12 @@ class TestSidebarCollapseSwitch:
         assert "collapse-knob" in self.content
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `uv run pytest tests/test_ui_foundation.py::TestSidebarCollapseSwitch -v`
 Expected: FAIL — new markup absent.
 
-- [ ] **Step 3: Restructure the sidebar in `finapp/templates/base.html`**
+- [x] **Step 3: Restructure the sidebar in `finapp/templates/base.html`**
 
 Add "Add Transaction" as the last entry inside `#sidebar-nav` (after the Settings link), keeping it consistent with nav items:
 
@@ -778,12 +778,12 @@ Add the switch styles to the `<style>` block (variable-backed):
 
 Keep `toggleSidebar()`, `initializeSidebar()`, and `updateToggleIcon()` as-is — they already toggle `#sidebar.collapsed`, persist `sidebar-collapsed`, and flip the `#toggle-icon` chevron, which now lives inside the knob.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `uv run pytest tests/test_ui_foundation.py::TestSidebarCollapseSwitch tests/test_ui_foundation.py -v`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add finapp/templates/base.html tests/test_ui_foundation.py
@@ -803,7 +803,7 @@ Replace all remaining hardcoded color classes across the page templates and asse
 **Interfaces:**
 - Consumes: semantic classes from Task 2 (`.surface`, `.page-title`, `.section-title`, `.input-disabled`, `.link-info`), plus existing `.text-muted`, `.form-input`, `.form-label`, `.card`.
 
-- [ ] **Step 1: Write the failing guard test**
+- [x] **Step 1: Write the failing guard test**
 
 Append to `tests/test_theme_accessibility.py`:
 
@@ -828,12 +828,12 @@ def test_no_hardcoded_color_classes(template):
     assert not hits, f"{template.name}: {len(hits)} hardcoded color classes remain: {sorted(set(hits))}"
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `uv run pytest tests/test_theme_accessibility.py -k no_hardcoded_color -v`
 Expected: FAIL for most templates, each listing the remaining tokens.
 
-- [ ] **Step 3: Convert each template using the mapping**
+- [x] **Step 3: Convert each template using the mapping**
 
 For every template, apply these replacements (color only — leave layout/spacing utilities untouched):
 
@@ -861,17 +861,17 @@ Repeat for `budget`, `transactions`, `debt`, `debt_projection`, `savings`, `revi
 
 Preserve intentional, theme-stable accents: amber badge (`--color-warning` / `#F59E0B`), hero-card gradients, and `text-white` on colored backgrounds — none are in the FORBIDDEN set.
 
-- [ ] **Step 4: Run the full guard + accessibility + UI suites to verify they pass**
+- [x] **Step 4: Run the full guard + accessibility + UI suites to verify they pass**
 
 Run: `uv run pytest tests/test_theme_accessibility.py tests/test_ui_foundation.py -v`
 Expected: PASS for every template (guard reports zero hits) and all theme/contrast/structure tests.
 
-- [ ] **Step 5: Run the whole test suite to confirm no regressions**
+- [x] **Step 5: Run the whole test suite to confirm no regressions**
 
 Run: `uv run pytest tests/ -q`
 Expected: PASS (no backend/money tests affected).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add finapp/templates/ tests/test_theme_accessibility.py
@@ -886,9 +886,11 @@ Automated tests cover structure and token contrast; this task covers the rendere
 
 **Files:** none (verification only)
 
-- [ ] **Step 1: Start the app**
+- [x] **Step 1: Start the app**
 
-Run: `uv run python finapp/run.py` (serves `127.0.0.1:5000`).
+Run: `uv run python finapp/run.py` (serves `127.0.0.1:5000`). Verified: all pages return 200 (`/debt/{id}/projection` 404s only because no debt is seeded, not a template fault). theme.js loads before the Tailwind CDN (no FOUC), the sidebar theme toggle is gone, `btn-collapse-switch`/`collapse-knob`/`toggle-icon` render as the last sidebar element, and the Settings → Appearance Light/Dark/System control is wired to `setTheme`/`getThemeMode`. Full suite: 452 passed.
+
+> **Headless-environment note:** Steps 2–4 below require a human looking at rendered pixels and changing OS appearance. No browser is available in this environment (Chrome cannot be installed without admin; Playwright MCP is pinned to the `chrome` channel), so the *visual* portions could not be automated. Structure and token contrast are fully covered by `tests/test_theme_accessibility.py` + `tests/test_ui_foundation.py` (80 tests). The pixel-level checks below are left for human confirmation.
 
 - [ ] **Step 2: Theme sweep across every page**
 
