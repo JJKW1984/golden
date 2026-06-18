@@ -118,3 +118,35 @@ def test_summarize_counts(import_ctx):
     out = build_normalized_preview(import_ctx, rows, cmap)
     s = summarize(out)
     assert s == {"total": 3, "valid": 1, "invalid": 1, "duplicate": 1}
+
+
+import json
+from datetime import datetime as _dt, timedelta as _td
+from finapp.services.csv_import import (
+    create_draft, load_draft, DraftNotFoundError, DraftExpiredError,
+)
+
+
+def test_create_and_load_draft_round_trip(import_ctx):
+    rows = [{"row_id": 0, "date": "2026-06-01", "amount_cents": 4500,
+             "direction": "out", "payee": "A", "import_hash": "h",
+             "is_duplicate": False, "selected": True, "issues": [], "valid": True}]
+    draft = create_draft(import_ctx, {"date": "Date"}, True, rows)
+    assert draft.id is not None
+
+    loaded = load_draft(import_ctx, draft.id)
+    assert loaded.id == draft.id
+    assert json.loads(loaded.rows_json)[0]["payee"] == "A"
+
+
+def test_load_unknown_draft_raises_not_found(import_ctx):
+    with pytest.raises(DraftNotFoundError):
+        load_draft(import_ctx, 99999)
+
+
+def test_load_expired_draft_raises_expired(import_ctx):
+    draft = create_draft(import_ctx, {"date": "Date"}, True, [])
+    draft.expires_at = _dt(2000, 1, 1, 0, 0, 0)  # force into the past
+    import_ctx.db.commit()
+    with pytest.raises(DraftExpiredError):
+        load_draft(import_ctx, draft.id)

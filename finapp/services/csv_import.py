@@ -6,13 +6,14 @@ Uses the ledger's compute_import_hash for dedup so preview matches stored state.
 """
 import csv
 import io
+import json
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 
 from finapp.deps import AccountContext
 from finapp.money import to_cents
-from finapp.models import Transaction
+from finapp.models import Transaction, ImportDraft
 from finapp.services.ledger import compute_import_hash
 
 
@@ -309,3 +310,51 @@ def needs_category_count(ctx: AccountContext) -> int:
         is_deleted=False,
         category_id=None
     ).count()
+
+
+DRAFT_TTL_SECONDS = 3600
+
+
+class DraftNotFoundError(Exception):
+    """Raised when a draft id does not exist for this account."""
+
+
+class DraftExpiredError(Exception):
+    """Raised when a draft exists but has passed its expires_at."""
+
+
+def _utcnow_naive() -> datetime:
+    """Naive UTC timestamp. SQLite stores DateTime without tzinfo, so we keep
+    draft timestamps naive to compare them safely."""
+    return datetime.utcnow()
+
+
+def create_draft(ctx: AccountContext, column_map: dict, spent_is_negative: bool,
+                 rows: list[dict]) -> ImportDraft:
+    """Persist a normalized preview as a draft scoped to ctx.account_id."""
+    now = _utcnow_naive()
+    draft = ImportDraft(
+        account_id=ctx.account_id,
+        created_at=now,
+        expires_at=now + timedelta(seconds=DRAFT_TTL_SECONDS),
+        column_map_json=json.dumps(column_map),
+        spent_is_negative=spent_is_negative,
+        rows_json=json.dumps(rows),
+        version=1,
+    )
+    ctx.db.add(draft)
+    ctx.db.commit()
+    return draft
+
+
+def load_draft(ctx: AccountContext, draft_id: int) -> ImportDraft:
+    """Load a draft by account + id. Raises DraftNotFoundError or
+    DraftExpiredError."""
+    draft = ctx.db.query(ImportDraft).filter_by(
+        id=draft_id, account_id=ctx.account_id
+    ).first()
+    if draft is None:
+        raise DraftNotFoundError(draft_id)
+    if _utcnow_naive() > draft.expires_at:
+        raise DraftExpiredError(draft_id)
+    return draft
