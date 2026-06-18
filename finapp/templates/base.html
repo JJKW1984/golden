@@ -165,11 +165,17 @@
 
         /* Add Transaction button styles */
         .btn-add-transaction {
-            @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-200;
+            @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium text-white transition-colors duration-200;
+            background-color: var(--color-info);
+        }
+
+        .btn-add-transaction:hover {
+            opacity: 0.9;
         }
 
         .btn-add-transaction-floating {
-            @apply fixed bottom-24 md:bottom-8 right-4 md:right-8 p-4 rounded-full text-white bg-blue-600 hover:bg-blue-700 shadow-lg transition-all duration-200 z-40;
+            @apply fixed bottom-24 md:bottom-8 right-4 md:right-8 p-4 rounded-full text-white shadow-lg transition-all duration-200 z-40;
+            background-color: var(--color-info);
             width: 56px;
             height: 56px;
             display: flex;
@@ -474,10 +480,10 @@
 <body onload="initializeSidebar()">
     <!-- Sidebar (desktop) -->
     <aside id="sidebar">
-        <div id="sidebar-header" class="px-6 py-6 border-b border-gray-200 flex items-start justify-between">
+        <div id="sidebar-header" class="px-6 py-6 flex items-start justify-between" style="border-bottom: 1px solid var(--border-color);">
             <div class="sidebar-brand">
-                <h1 class="text-xl font-bold text-gray-900">FinApp</h1>
-                <p class="text-sm text-gray-500">Budget & Goals</p>
+                <h1 class="text-xl font-bold page-title">FinApp</h1>
+                <p class="text-sm text-muted">Budget & Goals</p>
             </div>
         </div>
 
@@ -610,10 +616,10 @@
         <div class="modal-panel" onclick="event.stopPropagation()">
             <!-- Modal header -->
             <div
-                class="flex items-center justify-between px-6 py-4 border-b border-gray-200 sticky top-0 rounded-t-2xl md:rounded-t-xl"
-                style="background-color: var(--bg-primary);">
+                class="flex items-center justify-between px-6 py-4 sticky top-0 rounded-t-2xl md:rounded-t-xl"
+                style="background-color: var(--bg-primary); border-bottom: 1px solid var(--border-color);">
                 <h2 class="text-lg font-bold section-title">Add Transaction</h2>
-                <button type="button" class="text-muted hover:text-gray-700 text-2xl font-light leading-none"
+                <button type="button" class="text-muted text-2xl font-light leading-none"
                     aria-label="Close add transaction dialog" onclick="closeAddTransactionModal()">
                     ×
                 </button>
@@ -621,24 +627,24 @@
 
             <!-- Modal content (form placeholder) -->
             <div class="px-6 py-6">
-                <p class="text-gray-600 text-center">
+                <p class="text-muted text-center">
                     Transaction form will be wired in Phase 5.
                 </p>
 
                 <!-- Placeholder fields -->
                 <form class="space-y-4 mt-4" style="display: none;">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Date</label>
-                        <input type="date" class="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                        <label class="block text-sm font-medium form-label mb-2">Date</label>
+                        <input type="date" class="w-full px-4 py-2 form-input rounded-lg" />
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Amount</label>
-                        <input type="number" class="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                        <label class="block text-sm font-medium form-label mb-2">Amount</label>
+                        <input type="number" class="w-full px-4 py-2 form-input rounded-lg"
                             placeholder="0.00" />
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                        <select class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        <label class="block text-sm font-medium form-label mb-2">Category</label>
+                        <select class="w-full px-4 py-2 form-input rounded-lg">
                             <option>Select category...</option>
                         </select>
                     </div>
@@ -647,7 +653,7 @@
                             Save
                         </button>
                         <button type="button"
-                            class="flex-1 px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50"
+                            class="flex-1 px-4 py-2 form-input rounded-lg font-medium form-label"
                             onclick="closeAddTransactionModal()">
                             Cancel
                         </button>

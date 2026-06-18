@@ -7,24 +7,24 @@
     <h1 class="text-3xl font-bold mb-6">Budget</h1>
 
     {% if current_summary %}
-    <div class="bg-white rounded-lg shadow p-6 mb-6">
+    <div class="surface shadow p-6 mb-6">
         <h2 class="text-2xl font-semibold mb-4">Month {{ current_summary.month }}/{{ current_summary.year }}</h2>
 
         <div class="grid grid-cols-4 gap-4 mb-6">
-            <div class="bg-blue-50 p-4 rounded">
-                <div class="text-sm text-gray-600">Income</div>
+            <div class="card-accent card-accent-info p-4 rounded">
+                <div class="text-sm text-muted">Income</div>
                 <div class="text-2xl font-bold">${{ (current_summary.income_received_cents / 100) | round(2) }}</div>
             </div>
             <div class="bg-green-50 p-4 rounded">
-                <div class="text-sm text-gray-600">Allocated</div>
+                <div class="text-sm text-muted">Allocated</div>
                 <div class="text-2xl font-bold">${{ (current_summary.total_target_cents / 100) | round(2) }}</div>
             </div>
             <div class="bg-orange-50 p-4 rounded">
-                <div class="text-sm text-gray-600">Spent</div>
+                <div class="text-sm text-muted">Spent</div>
                 <div class="text-2xl font-bold">${{ (current_summary.total_spent_cents / 100) | round(2) }}</div>
             </div>
             <div class="bg-teal-50 p-4 rounded">
-                <div class="text-sm text-gray-600">Remaining</div>
+                <div class="text-sm text-muted">Remaining</div>
                 <div class="text-2xl font-bold">${{ (current_summary.total_remaining_cents / 100) | round(2) }}</div>
             </div>
         </div>
@@ -41,7 +41,7 @@
             </thead>
             <tbody>
                 {% for cat in current_summary.categories %}
-                <tr class="border-b hover:bg-gray-50">
+                <tr class="border-b">
                     <td class="py-2">{{ cat.category_name }}</td>
                     <td class="py-2 text-right">${{ (cat.target_cents / 100) | round(2) }}</td>
                     <td class="py-2 text-right">${{ (cat.spent_cents / 100) | round(2) }}</td>
@@ -53,9 +53,9 @@
         {% endif %}
     </div>
     {% else %}
-    <div class="bg-white rounded-lg shadow p-6 max-w-2xl">
-        <h2 class="text-xl font-semibold text-gray-900 mb-2">No budget period yet</h2>
-        <p class="text-gray-700 mb-4">Log income or open Monthly Reset to get started.</p>
+    <div class="surface shadow p-6 max-w-2xl">
+        <h2 class="text-xl font-semibold section-title mb-2">No budget period yet</h2>
+        <p class="text-primary-color mb-4">Log income or open Monthly Reset to get started.</p>
         <button type="button" class="btn-add-transaction" onclick="openAddTransactionModal()">Add Transaction</button>
     </div>
     {% endif %}

@@ -138,3 +138,27 @@ class TestBaseChromeThemed:
         assert "var(--bg-primary)" in style
         assert "var(--text-primary)" in style
         assert "var(--border-color)" in style
+
+
+# ---------------------------------------------------------------------------
+# Global guard: zero hardcoded color classes in ANY template
+# ---------------------------------------------------------------------------
+
+TEMPLATES_DIR = REPO_ROOT / "finapp" / "templates"
+
+# Color-bearing Tailwind tokens that must not appear in any template after conversion.
+FORBIDDEN = re.compile(
+    r"\b(?:text-gray-\d{2,3}|bg-gray-\d{2,3}|border-gray-\d{2,3}"
+    r"|divide-gray-\d{2,3}|text-blue-\d{2,3}|bg-blue-\d{2,3}|bg-white)\b"
+)
+
+
+def _all_templates():
+    return sorted(TEMPLATES_DIR.glob("*.html"))
+
+
+@pytest.mark.parametrize("template", _all_templates(), ids=lambda p: p.name)
+def test_no_hardcoded_color_classes(template):
+    text = template.read_text()
+    hits = FORBIDDEN.findall(text)
+    assert not hits, f"{template.name}: {len(hits)} hardcoded color classes remain: {sorted(set(hits))}"

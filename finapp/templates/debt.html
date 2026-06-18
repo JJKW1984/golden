@@ -8,38 +8,38 @@
 
     {% if active_debt %}
     <!-- Active Target Card -->
-    <div class="border-2 border-blue-500 rounded-lg p-6 bg-blue-50">
+    <div class="card-accent card-accent-info rounded-lg p-6">
         <h2 class="text-xl font-bold mb-4">{{ active_debt.name }}</h2>
 
         <div class="grid grid-cols-2 gap-4 mb-6">
             <div>
-                <p class="text-gray-600 text-sm">Balance</p>
+                <p class="text-muted text-sm">Balance</p>
                 <p class="text-2xl font-bold">${{ "%.2f"|format(active_debt.balance) }}</p>
             </div>
             <div>
-                <p class="text-gray-600 text-sm">Progress</p>
+                <p class="text-muted text-sm">Progress</p>
                 <p class="text-2xl font-bold">{{ "%.0f"|format(active_debt.percent_paid) }}%</p>
             </div>
             <div>
-                <p class="text-gray-600 text-sm">Minimum Payment</p>
+                <p class="text-muted text-sm">Minimum Payment</p>
                 <p class="text-xl">${{ "%.2f"|format(active_debt.minimum_payment) }}</p>
             </div>
             <div>
-                <p class="text-gray-600 text-sm">Projected Payoff</p>
+                <p class="text-muted text-sm">Projected Payoff</p>
                 <p class="text-xl">{{ active_debt.payoff_date }}</p>
             </div>
         </div>
 
         <div class="flex gap-2 flex-wrap">
-            <button class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded font-medium"
+            <button class="text-white px-6 py-2 rounded font-medium" style="background-color: var(--color-info);"
                     onclick="openPaymentModal({{ active_debt.id }})">
                 Log Payment
             </button>
             <a href="/debt/{{ active_debt.id }}/projection"
-               class="bg-gray-200 hover:bg-gray-300 px-6 py-2 rounded font-medium text-gray-800 no-underline inline-block">
+               class="px-6 py-2 rounded font-medium no-underline inline-block" style="background-color: var(--bg-tertiary); color: var(--text-primary);">
                 See Projection
             </a>
-            <button class="bg-gray-200 hover:bg-gray-300 px-6 py-2 rounded font-medium text-gray-800"
+            <button class="px-6 py-2 rounded font-medium" style="background-color: var(--bg-tertiary); color: var(--text-primary);"
                     onclick="openAdjustmentModal({{ active_debt.id }})">
                 Update Balance
             </button>
@@ -52,16 +52,16 @@
     <div class="space-y-3">
         <h3 class="text-lg font-bold">Debt Queue</h3>
         {% for debt in other_debts %}
-        <div class="border rounded-lg p-4 bg-white hover:bg-gray-50 cursor-pointer transition-colors"
+        <div class="surface p-4 cursor-pointer transition-colors"
              onclick="focusDebt({{ debt.id }})">
             <div class="flex justify-between items-start">
                 <div>
                     <h4 class="font-semibold">{{ debt.name }}</h4>
-                    <p class="text-gray-600 text-sm">Balance: ${{ "%.2f"|format(debt.balance) }}</p>
+                    <p class="text-muted text-sm">Balance: ${{ "%.2f"|format(debt.balance) }}</p>
                 </div>
                 <div class="text-right">
                     <p class="font-semibold">{{ "%.0f"|format(debt.percent_paid) }}%</p>
-                    <p class="text-gray-600 text-xs">paid off</p>
+                    <p class="text-muted text-xs">paid off</p>
                 </div>
             </div>
         </div>
@@ -77,8 +77,8 @@
     {% endif %}
 
     {% if not debts %}
-    <div class="bg-gray-50 rounded-lg p-8 text-center">
-        <p class="text-gray-700">No active debts yet. Add one in Settings when you're ready.</p>
+    <div class="rounded-lg p-8 text-center" style="background-color: var(--bg-tertiary);">
+        <p class="text-primary-color">No active debts yet. Add one in Settings when you're ready.</p>
     </div>
     {% endif %}
 </div>

@@ -6,6 +6,8 @@ CSV column map (JSON in Settings.csv_column_map), and category management
 (add / rename / hide / reorder). System categories are locked (cannot be
 renamed or hidden).
 """
+from pathlib import Path
+
 import pytest
 from finapp.deps import AccountContext
 from finapp.models import Settings, BudgetCategory
@@ -130,8 +132,6 @@ def test_list_categories_scoped_by_account(settings_ctx):
 # ---------------------------------------------------------------------------
 # Template content: Appearance section
 # ---------------------------------------------------------------------------
-
-from pathlib import Path
 
 SETTINGS_HTML = Path(__file__).parent.parent / "finapp" / "templates" / "settings.html"
 
