@@ -1,0 +1,22 @@
+tests/test_ui_foundation.py
+  s_710b0e62da86bf::t_9efcbd35485275 267
+finapp/templates/base.html
+  s_710b0e62da86bf::t_82a54a50b9a9e5 419-468
+  s_710b0e62da86bf::t_6a9e88bd040cd6 548
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "3514dd675c753a916920ec11d6a3a50fbecf40be",
+  "prompts": {},
+  "sessions": {
+    "s_710b0e62da86bf": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cf87ae90-500e-463c-91f0-6e5804135dcd",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    }
+  }
+}
