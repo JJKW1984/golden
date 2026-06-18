@@ -13,7 +13,7 @@
     <script src="/static/theme.js"></script>
 
     <!-- Tailwind CSS (Play CDN) -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com" integrity="sha384-ZOxlONqYT8A/gUxhJkXJP2pC2wqaX4yWvC4u6hLZwl3MFjL2YqDvXfS4t2Rq4nNd" crossorigin="anonymous"></script>
 
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.10"
@@ -190,7 +190,7 @@
 
         /* Utilities */
         .text-muted {
-            @apply text-gray-500;
+            color: var(--text-secondary);
         }
 
         .text-success {
