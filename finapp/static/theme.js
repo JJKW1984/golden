@@ -1,79 +1,74 @@
 /**
- * Theme toggle — light / dark mode with localStorage persistence.
- * Spec: docs/superpowers/specs/2026-06-17-ui-design-system.md, Part 7
+ * Theme engine — light / dark / system with localStorage persistence.
+ * Spec: docs/superpowers/specs/2026-06-17-dark-light-accessibility-and-sidebar-collapse-design.md
  *
- * Usage:
- *   Call toggleTheme() from a button's onclick handler.
- *   Theme is saved to localStorage under the key "theme" ("light" or "dark").
+ * Stored under localStorage key "theme" as one of: "light" | "dark" | "system".
+ * "system" resolves via prefers-color-scheme and updates live on OS change.
  */
-
 (function () {
   'use strict';
 
-  /**
-   * Apply the given theme ('light' or 'dark') to <html> and update any
-   * toggle button icons already in the DOM.
-   * @param {string} theme - 'light' or 'dark'
-   */
-  function applyTheme(theme) {
+  var MEDIA = window.matchMedia('(prefers-color-scheme: dark)');
+
+  function storedMode() {
+    var m = localStorage.getItem('theme');
+    return (m === 'light' || m === 'dark' || m === 'system') ? m : 'light';
+  }
+
+  function resolve(mode) {
+    if (mode === 'system') {
+      return MEDIA.matches ? 'dark' : 'light';
+    }
+    return mode;
+  }
+
+  function applyResolved(resolved) {
     var html = document.documentElement;
-    if (theme === 'dark') {
+    if (resolved === 'dark') {
       html.classList.add('dark-theme');
       html.classList.remove('light-theme');
     } else {
       html.classList.remove('dark-theme');
       html.classList.add('light-theme');
     }
-    updateToggleIcons(theme);
   }
 
-  /**
-   * Update the aria-label and icon of every .js-theme-toggle button
-   * to reflect the current theme.
-   * @param {string} theme - 'light' or 'dark'
-   */
-  function updateToggleIcons(theme) {
-    var buttons = document.querySelectorAll('.js-theme-toggle');
-    for (var i = 0; i < buttons.length; i++) {
-      var btn = buttons[i];
-      var icon = btn.querySelector('.js-theme-icon');
-      if (theme === 'dark') {
-        btn.setAttribute('aria-label', 'Switch to light theme');
-        btn.setAttribute('title', 'Switch to light theme');
-        if (icon) { icon.textContent = '☀️'; }
-      } else {
-        btn.setAttribute('aria-label', 'Switch to dark theme');
-        btn.setAttribute('title', 'Switch to dark theme');
-        if (icon) { icon.textContent = '🌙'; }
-      }
+  // React to OS changes only while in system mode.
+  function onSystemChange() {
+    if (storedMode() === 'system') {
+      applyResolved(resolve('system'));
     }
   }
+  if (MEDIA.addEventListener) {
+    MEDIA.addEventListener('change', onSystemChange);
+  } else if (MEDIA.addListener) {
+    MEDIA.addListener(onSystemChange); // older browsers
+  }
 
-  /**
-   * Toggle between light and dark themes, persisting the choice.
-   * Called from the toggle button's onclick.
-   */
+  /** Set and persist the theme mode. mode: 'light' | 'dark' | 'system'. */
+  function setTheme(mode) {
+    if (mode !== 'light' && mode !== 'dark' && mode !== 'system') {
+      mode = 'light';
+    }
+    localStorage.setItem('theme', mode);
+    applyResolved(resolve(mode));
+  }
+
+  /** Return the stored mode ('light' | 'dark' | 'system'). */
+  function getThemeMode() {
+    return storedMode();
+  }
+
+  /** Back-compat: flip between light and dark explicitly. */
   function toggleTheme() {
-    var current = document.documentElement.classList.contains('dark-theme')
-      ? 'dark'
-      : 'light';
-    var next = current === 'dark' ? 'light' : 'dark';
-    localStorage.setItem('theme', next);
-    applyTheme(next);
+    var resolved = document.documentElement.classList.contains('dark-theme') ? 'dark' : 'light';
+    setTheme(resolved === 'dark' ? 'light' : 'dark');
   }
 
-  // Restore saved preference on every page load (runs immediately on script parse).
-  var savedTheme = localStorage.getItem('theme') || 'light';
-  applyTheme(savedTheme);
+  // Apply saved preference immediately (before first paint).
+  applyResolved(resolve(storedMode()));
 
-  // The toggle button is rendered later in the HTML; sync its icon/labels once it's in the DOM.
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () {
-      var theme = document.documentElement.classList.contains('dark-theme') ? 'dark' : 'light';
-      updateToggleIcons(theme);
-    }, { once: true });
-  }
-
-  // Expose toggleTheme globally so inline onclick handlers can call it.
+  window.setTheme = setTheme;
+  window.getThemeMode = getThemeMode;
   window.toggleTheme = toggleTheme;
 }());

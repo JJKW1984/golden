@@ -154,6 +154,21 @@ class TestThemeJSContent:
         # If no saved preference, must default to 'light'
         assert "'light'" in self.content or '"light"' in self.content
 
+    def test_set_theme_function_defined(self):
+        assert "function setTheme" in self.content or "setTheme =" in self.content
+
+    def test_set_theme_exposed_globally(self):
+        assert "window.setTheme" in self.content
+
+    def test_system_mode_supported(self):
+        assert "system" in self.content
+
+    def test_prefers_color_scheme_used(self):
+        assert "prefers-color-scheme" in self.content
+
+    def test_matchmedia_used(self):
+        assert "matchMedia" in self.content
+
 
 # ---------------------------------------------------------------------------
 # base.html integration
