@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -15,60 +16,107 @@
     <script src="https://cdn.tailwindcss.com" integrity="sha384-ZOxlONqYT8A/gUxhJkXJP2pC2wqaX4yWvC4u6hLZwl3MFjL2YqDvXfS4t2Rq4nNd" crossorigin="anonymous"></script>
 
     <!-- HTMX -->
-    <script src="https://unpkg.com/htmx.org@1.9.10" integrity="sha384-D1Kt99CQMDuVeK5mXA0C5n9+fFplnTmHpSvHO1RJkCMw3f/DxmlJ8oPjGELHNWuLQ" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"
+        integrity="sha384-D1Kt99CQMDuVeK5mXA0C5n9+fFplnTmHpSvHO1RJkCMw3f/DxmlJ8oPjGELHNWuLQ"
+        crossorigin="anonymous"></script>
 
     <!-- Alpine.js (optional, for UI toggles) -->
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" integrity="sha384-nVDQlWJywQyB56zNON36OfWJM0l6w1wHfM2OqsNUC8kxpGR/VhknP0rhjKSmvAv4M" crossorigin="anonymous"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"
+        integrity="sha384-nVDQlWJywQyB56zNON36OfWJM0l6w1wHfM2OqsNUC8kxpGR/VhknP0rhjKSmvAv4M"
+        crossorigin="anonymous"></script>
 
     <!-- Chart.js (for debt/savings projections) -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js" integrity="sha384-TN3Hv5OYYP5+bL1s6K4qYaZrQ3zGfGSVVaWatDh6f3nXj0Gh6bUvCNGYLQV/B3Vhm" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"
+        integrity="sha384-TN3Hv5OYYP5+bL1s6K4qYaZrQ3zGfGSVVaWatDh6f3nXj0Gh6bUvCNGYLQV/B3Vhm"
+        crossorigin="anonymous"></script>
 
     <style>
         body {
             background-color: var(--bg-secondary);
             color: var(--text-primary);
+            transition: margin-left 0.3s ease;
         }
 
         /* Layout variables for responsive nav */
         @media (min-width: 768px) {
             body {
-                margin-left: 16rem; /* 256px sidebar width */
+                margin-left: 16rem;
+                /* 256px sidebar width */
+            }
+
+            body.sidebar-collapsed {
+                margin-left: 5rem;
+                /* 80px sidebar width when collapsed */
             }
         }
 
         /* Sidebar (shown at md and above) */
         #sidebar {
-            @apply fixed left-0 top-0 h-screen w-64 bg-white border-r border-gray-200 shadow-sm;
+            @apply fixed left-0 top-0 h-screen w-64;
             @apply hidden md:flex md:flex-col;
+            background-color: var(--bg-primary);
+            border-right: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
             z-index: 50;
             overflow-y: auto;
+            transition: width 0.3s ease;
+        }
+
+        #sidebar.collapsed {
+            @apply w-20;
+            align-items: center;
         }
 
         #sidebar-nav {
             @apply flex-1 px-4 py-6 space-y-1;
         }
 
+        #sidebar.collapsed #sidebar-nav {
+            @apply p-2;
+        }
+
         #sidebar-nav a,
         #sidebar-nav button {
-            @apply block w-full px-4 py-3 text-left rounded-lg text-gray-700 font-medium
-                   transition-colors duration-200;
-            @apply hover:bg-gray-100 hover:text-gray-900;
+            @apply block w-full px-4 py-3 text-left rounded-lg font-medium transition-colors duration-200;
+            color: var(--text-primary);
+        }
+
+        #sidebar-nav a:hover,
+        #sidebar-nav button:hover {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        #sidebar.collapsed #sidebar-nav a,
+        #sidebar.collapsed #sidebar-nav button {
+            @apply px-2 py-2 text-center;
         }
 
         #sidebar-nav a.active,
         #sidebar-nav button.active {
-            @apply bg-blue-50 text-blue-600 border-l-4 border-blue-600 pl-3;
+            background-color: var(--color-info-light);
+            color: var(--color-info);
+            border-left: 4px solid var(--color-info);
+            padding-left: 0.75rem;
+        }
+
+        #sidebar.collapsed #sidebar-nav a.active,
+        #sidebar.collapsed #sidebar-nav button.active {
+            @apply border-l-0 pl-2;
         }
 
         /* Sidebar footer with Add Transaction button */
         #sidebar-footer {
-            @apply px-4 py-4 border-t border-gray-200;
+            @apply px-4 py-4;
+            border-top: 1px solid var(--border-color);
         }
 
         /* Bottom navigation (shown below md) */
         #bottom-nav {
-            @apply fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg;
+            @apply fixed bottom-0 left-0 right-0 shadow-lg;
             @apply block md:hidden;
+            background-color: var(--bg-primary);
+            border-top: 1px solid var(--border-color);
             z-index: 50;
         }
 
@@ -78,14 +126,20 @@
 
         #bottom-nav-items a,
         #bottom-nav-items button {
-            @apply flex flex-col items-center justify-center w-16 h-16 rounded-lg
-                   text-gray-600 text-xs font-medium transition-colors duration-200;
-            @apply hover:text-blue-600 hover:bg-blue-50;
+            @apply flex flex-col items-center justify-center w-16 h-16 rounded-lg text-xs font-medium transition-colors duration-200;
+            color: var(--text-secondary);
+        }
+
+        #bottom-nav-items a:hover,
+        #bottom-nav-items button:hover {
+            color: var(--color-info);
+            background-color: var(--color-info-light);
         }
 
         #bottom-nav-items a.active,
         #bottom-nav-items button.active {
-            @apply text-blue-600 bg-blue-50;
+            color: var(--color-info);
+            background-color: var(--color-info-light);
         }
 
         /* Icon styles for nav items */
@@ -93,22 +147,35 @@
             @apply w-6 h-6 mb-1;
         }
 
+        /* Sidebar nav item labels - hide when collapsed */
+        #sidebar .nav-label {
+            display: inline;
+        }
+
+        #sidebar.collapsed .nav-label {
+            display: none;
+        }
+
         /* Main content area */
         #main-content {
             @apply min-h-screen px-4 py-6 md:px-8 md:py-8;
-            @apply pb-24 md:pb-8; /* Bottom padding to accommodate bottom nav on mobile */
+            @apply pb-24 md:pb-8;
+            /* Bottom padding to accommodate bottom nav on mobile */
         }
 
         /* Add Transaction button styles */
         .btn-add-transaction {
-            @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium
-                   text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-200;
+            @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium text-white transition-colors duration-200;
+            background-color: var(--color-info);
+        }
+
+        .btn-add-transaction:hover {
+            opacity: 0.9;
         }
 
         .btn-add-transaction-floating {
-            @apply fixed bottom-24 md:bottom-8 right-4 md:right-8 p-4 rounded-full
-                   text-white bg-blue-600 hover:bg-blue-700 shadow-lg
-                   transition-all duration-200 z-40;
+            @apply fixed bottom-24 md:bottom-8 right-4 md:right-8 p-4 rounded-full text-white shadow-lg transition-all duration-200 z-40;
+            background-color: var(--color-info);
             width: 56px;
             height: 56px;
             display: flex;
@@ -123,13 +190,13 @@
         }
 
         .modal-panel {
-            @apply bg-white rounded-t-2xl md:rounded-xl w-full md:max-w-md max-h-[90vh]
-                   overflow-y-auto shadow-2xl;
+            @apply rounded-t-2xl md:rounded-xl w-full md:max-w-md max-h-[90vh] overflow-y-auto shadow-2xl;
+            background-color: var(--bg-primary);
         }
 
         /* Utilities */
         .text-muted {
-            @apply text-gray-500;
+            color: var(--text-secondary);
         }
 
         .text-success {
@@ -141,8 +208,8 @@
         }
 
         .badge-count {
-            @apply inline-flex items-center justify-center w-5 h-5 text-xs font-bold
-                   text-white bg-amber-500 rounded-full;
+            @apply inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white rounded-full;
+            background-color: var(--color-warning);
         }
 
         /* Responsive adjustments */
@@ -150,6 +217,261 @@
             body {
                 margin-left: 0;
             }
+
+            body.sidebar-collapsed {
+                margin-left: 0;
+            }
+        }
+
+        /* Sidebar header styling for collapsed state */
+        #sidebar-header {
+            width: 100%;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        #sidebar.collapsed #sidebar-header {
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .sidebar-brand {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        #sidebar.collapsed .sidebar-brand {
+            display: none;
+        }
+
+        .btn-toggle-sidebar {
+            flex-shrink: 0;
+            padding: 0.4rem;
+            font-size: 1rem;
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.75rem;
+            height: 1.75rem;
+        }
+
+        .btn-toggle-sidebar:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--border-color);
+        }
+
+        /*
+         * Fallback nav layout: keep sidebar and nav-item sizing stable even when
+         * Tailwind Play CDN is unavailable and @apply rules are not processed.
+         */
+        #sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            width: 16rem;
+            display: none;
+            flex-direction: column;
+            background-color: var(--bg-primary);
+            border-right: 1px solid var(--border-color);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            z-index: 50;
+            overflow-y: auto;
+            transition: width 0.3s ease;
+        }
+
+        #sidebar.collapsed {
+            width: 5rem;
+            align-items: center;
+        }
+
+        @media (min-width: 768px) {
+            #sidebar {
+                display: flex;
+            }
+        }
+
+        #sidebar-nav {
+            flex: 1 1 auto;
+            padding: 1.5rem 1rem;
+        }
+
+        #sidebar-nav .nav-item {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            font-weight: 500;
+            line-height: 1.25rem;
+            text-decoration: none;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        #sidebar.collapsed #sidebar-nav .nav-item {
+            justify-content: center;
+            padding: 0.5rem;
+            font-size: 0;
+        }
+
+        #sidebar-nav .nav-item+.nav-item {
+            margin-top: 0.25rem;
+        }
+
+        #sidebar-nav .nav-item:hover {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        #sidebar-nav .nav-item.active {
+            background-color: var(--color-info-light);
+            color: var(--color-info);
+            border-left: 4px solid var(--color-info);
+            padding-left: 0.75rem;
+        }
+
+        #sidebar.collapsed #sidebar-nav .nav-item.active {
+            border-left: 0;
+            padding-left: 0.5rem;
+        }
+
+        #sidebar-footer {
+            padding: 1rem;
+            border-top: 1px solid var(--border-color);
+            width: 100%;
+        }
+
+        #sidebar.collapsed #sidebar-footer {
+            padding: 0.5rem;
+        }
+
+
+        #bottom-nav {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: block;
+            background-color: var(--bg-primary);
+            border-top: 1px solid var(--border-color);
+            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+            z-index: 50;
+        }
+
+        @media (min-width: 768px) {
+            #bottom-nav {
+                display: none;
+            }
+        }
+
+        #bottom-nav-items {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: 5rem;
+            padding: 0 0.5rem;
+        }
+
+        #bottom-nav-items .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 4rem;
+            height: 4rem;
+            border-radius: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            font-weight: 500;
+            line-height: 1rem;
+            text-decoration: none;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        #bottom-nav-items .nav-item:hover,
+        #bottom-nav-items .nav-item.active {
+            color: var(--color-info);
+            background-color: var(--color-info-light);
+        }
+
+        .nav-icon {
+            width: 1.5rem;
+            height: 1.5rem;
+            margin-bottom: 0.25rem;
+            flex-shrink: 0;
+        }
+
+        #main-content {
+            min-height: 100vh;
+            padding: 1.5rem 1rem 6rem;
+        }
+
+        @media (min-width: 768px) {
+            #main-content {
+                padding: 2rem;
+            }
+        }
+
+        /* Full-width sliding collapse switch (last sidebar element) */
+        .btn-collapse-switch {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+            height: 40px;
+            padding: 0 0.5rem;
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: background-color var(--transition-normal);
+            overflow: hidden;
+        }
+
+        .btn-collapse-switch:hover {
+            background-color: var(--bg-secondary);
+        }
+
+        .collapse-knob {
+            position: absolute;
+            left: 6px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 999px;
+            background-color: var(--bg-primary);
+            box-shadow: var(--shadow-sm);
+            transition: left var(--transition-slow);
+            flex-shrink: 0;
+        }
+
+        /* Expanded: knob at left, label visible to the right */
+        #sidebar:not(.collapsed) .collapse-knob {
+            left: 6px;
+        }
+
+        /* Collapsed: sidebar is ~80px wide; slide knob to right end of track */
+        #sidebar.collapsed .collapse-knob {
+            left: calc(100% - 34px);
+        }
+
+        #sidebar.collapsed .btn-collapse-switch {
+            justify-content: center;
         }
     </style>
 
@@ -159,21 +481,11 @@
 <body>
     <!-- Sidebar (desktop) -->
     <aside id="sidebar">
-        <div class="px-6 py-6 border-b border-gray-200 flex items-start justify-between">
-            <div>
-                <h1 class="text-xl font-bold text-gray-900">FinApp</h1>
-                <p class="text-sm text-gray-500">Budget & Goals</p>
+        <div id="sidebar-header" class="px-6 py-6 flex items-start justify-between" style="border-bottom: 1px solid var(--border-color);">
+            <div class="sidebar-brand">
+                <h1 class="text-xl font-bold page-title">FinApp</h1>
+                <p class="text-sm text-muted">Budget & Goals</p>
             </div>
-            <!-- Theme toggle button -->
-            <button
-                type="button"
-                class="btn-theme-toggle js-theme-toggle mt-1"
-                onclick="toggleTheme()"
-                aria-label="Switch to dark theme"
-                title="Switch to dark theme"
-            >
-                <span class="js-theme-icon">🌙</span>
-            </button>
         </div>
 
         <nav id="sidebar-nav">
@@ -181,52 +493,66 @@
                 <svg class="nav-icon" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M3 13h2v8H3zm4-8h2v16H7zm4-2h2v18h-2zm4-2h2v20h-2zm4 4h2v16h-2z" />
                 </svg>
-                Dashboard
+                <span class="nav-label">Dashboard</span>
             </a>
             <a href="/budget" class="nav-item" data-route="budget">
                 <svg class="nav-icon" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z" />
+                    <path
+                        d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z" />
                 </svg>
-                Budget
+                <span class="nav-label">Budget</span>
             </a>
             <a href="/transactions" class="nav-item" data-route="transactions">
                 <svg class="nav-icon" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M9 5H7v14h2V5zm4 0h-2v14h2V5zm4 0h-2v14h2V5zm5-2h-1V2h-2v1H8V2H6v1H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z" />
+                    <path
+                        d="M9 5H7v14h2V5zm4 0h-2v14h2V5zm4 0h-2v14h2V5zm5-2h-1V2h-2v1H8V2H6v1H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z" />
                 </svg>
-                Transactions
+                <span class="nav-label">Transactions</span>
             </a>
             <a href="/debt" class="nav-item" data-route="debt">
                 <svg class="nav-icon" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M21 18v1H3v-1s0-4 9-4 9 4 9 4zm-9-12a4 4 0 1 1 0 8 4 4 0 0 1 0-8zM1 20.9V24h22v-3.1c0-3.6-5.9-5.9-11-5.9s-11 2.3-11 5.9z" />
+                    <path
+                        d="M21 18v1H3v-1s0-4 9-4 9 4 9 4zm-9-12a4 4 0 1 1 0 8 4 4 0 0 1 0-8zM1 20.9V24h22v-3.1c0-3.6-5.9-5.9-11-5.9s-11 2.3-11 5.9z" />
                 </svg>
-                Debt
+                <span class="nav-label">Debt</span>
             </a>
             <a href="/savings" class="nav-item" data-route="savings">
                 <svg class="nav-icon" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" />
+                    <path
+                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" />
                 </svg>
-                Savings
+                <span class="nav-label">Savings</span>
             </a>
             <a href="/reviews" class="nav-item" data-route="reviews">
                 <svg class="nav-icon" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-5.04-6.71l-2.75 3.54-2.12-2.58-4.27 5.47h12.91L13.96 12.29z" />
+                    <path
+                        d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-5.04-6.71l-2.75 3.54-2.12-2.58-4.27 5.47h12.91L13.96 12.29z" />
                 </svg>
-                Reviews
+                <span class="nav-label">Reviews</span>
             </a>
             <a href="/settings" class="nav-item" data-route="settings">
                 <svg class="nav-icon" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.62l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.4-1.04-.73-1.63-.99l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.26-1.13.59-1.63.99l-2.39-.96c-.22-.09-.47 0-.59.22L2.74 8.87c-.12.21-.08.48.1.62l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.1.62l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.4 1.04.73 1.63.99l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.26 1.13-.59 1.63-.99l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.48-.12-.62l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
+                    <path
+                        d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.62l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.4-1.04-.73-1.63-.99l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.26-1.13.59-1.63.99l-2.39-.96c-.22-.09-.47 0-.59.22L2.74 8.87c-.12.21-.08.48.1.62l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.1.62l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.4 1.04.73 1.63.99l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.26 1.13-.59 1.63-.99l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.48-.12-.62l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
                 </svg>
-                Settings
+                <span class="nav-label">Settings</span>
             </a>
+            <!-- Add Transaction (last nav entry) -->
+            <button type="button" class="nav-item" onclick="openAddTransactionModal()" title="Add Transaction">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                <span class="nav-label">Add Transaction</span>
+            </button>
         </nav>
 
         <div id="sidebar-footer">
-            <button class="btn-add-transaction w-full" onclick="openAddTransactionModal()">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
-                Add Transaction
+            <button type="button" id="btn-collapse-switch" class="btn-collapse-switch"
+                onclick="toggleSidebar()" aria-label="Collapse sidebar" title="Collapse sidebar">
+                <span class="collapse-knob" id="collapse-knob">
+                    <span id="toggle-icon">‹</span>
+                </span>
+                <span id="collapse-label" class="nav-label" style="margin-left: 2.25rem;">Collapse</span>
             </button>
         </div>
     </aside>
@@ -242,25 +568,29 @@
             </a>
             <a href="/budget" class="nav-item" data-route="budget">
                 <svg class="nav-icon" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z" />
+                    <path
+                        d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z" />
                 </svg>
                 <span>Budget</span>
             </a>
             <a href="/transactions" class="nav-item" data-route="transactions">
                 <svg class="nav-icon" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M9 5H7v14h2V5zm4 0h-2v14h2V5zm4 0h-2v14h2V5zm5-2h-1V2h-2v1H8V2H6v1H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z" />
+                    <path
+                        d="M9 5H7v14h2V5zm4 0h-2v14h2V5zm4 0h-2v14h2V5zm5-2h-1V2h-2v1H8V2H6v1H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z" />
                 </svg>
                 <span>Trans</span>
             </a>
             <a href="/debt" class="nav-item" data-route="debt">
                 <svg class="nav-icon" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M21 18v1H3v-1s0-4 9-4 9 4 9 4zm-9-12a4 4 0 1 1 0 8 4 4 0 0 1 0-8zM1 20.9V24h22v-3.1c0-3.6-5.9-5.9-11-5.9s-11 2.3-11 5.9z" />
+                    <path
+                        d="M21 18v1H3v-1s0-4 9-4 9 4 9 4zm-9-12a4 4 0 1 1 0 8 4 4 0 0 1 0-8zM1 20.9V24h22v-3.1c0-3.6-5.9-5.9-11-5.9s-11 2.3-11 5.9z" />
                 </svg>
                 <span>Debt</span>
             </a>
             <a href="/savings" class="nav-item" data-route="savings">
                 <svg class="nav-icon" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" />
+                    <path
+                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" />
                 </svg>
                 <span>Save</span>
             </a>
@@ -268,13 +598,8 @@
     </nav>
 
     <!-- Floating Add Transaction button (mobile) -->
-    <button
-        class="btn-add-transaction-floating md:hidden"
-        type="button"
-        aria-label="Add Transaction"
-        onclick="openAddTransactionModal()"
-        title="Add Transaction"
-    >
+    <button class="btn-add-transaction-floating md:hidden" type="button" aria-label="Add Transaction"
+        onclick="openAddTransactionModal()" title="Add Transaction">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>
@@ -291,37 +616,36 @@
     <div id="add-transaction-modal" class="modal-backdrop hidden" onclick="closeAddTransactionModal(event)">
         <div class="modal-panel" onclick="event.stopPropagation()">
             <!-- Modal header -->
-            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 sticky top-0 bg-white rounded-t-2xl md:rounded-t-xl">
-                <h2 class="text-lg font-bold text-gray-900">Add Transaction</h2>
-                <button
-                    type="button"
-                    class="text-gray-500 hover:text-gray-700 text-2xl font-light leading-none"
-                    aria-label="Close add transaction dialog"
-                    onclick="closeAddTransactionModal()"
-                >
+            <div
+                class="flex items-center justify-between px-6 py-4 sticky top-0 rounded-t-2xl md:rounded-t-xl"
+                style="background-color: var(--bg-primary); border-bottom: 1px solid var(--border-color);">
+                <h2 class="text-lg font-bold section-title">Add Transaction</h2>
+                <button type="button" class="text-muted text-2xl font-light leading-none"
+                    aria-label="Close add transaction dialog" onclick="closeAddTransactionModal()">
                     ×
                 </button>
             </div>
 
             <!-- Modal content (form placeholder) -->
             <div class="px-6 py-6">
-                <p class="text-gray-600 text-center">
+                <p class="text-muted text-center">
                     Transaction form will be wired in Phase 5.
                 </p>
 
                 <!-- Placeholder fields -->
                 <form class="space-y-4 mt-4" style="display: none;">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Date</label>
-                        <input type="date" class="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                        <label class="block text-sm font-medium form-label mb-2">Date</label>
+                        <input type="date" class="w-full px-4 py-2 form-input rounded-lg" />
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Amount</label>
-                        <input type="number" class="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="0.00" />
+                        <label class="block text-sm font-medium form-label mb-2">Amount</label>
+                        <input type="number" class="w-full px-4 py-2 form-input rounded-lg"
+                            placeholder="0.00" />
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                        <select class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        <label class="block text-sm font-medium form-label mb-2">Category</label>
+                        <select class="w-full px-4 py-2 form-input rounded-lg">
                             <option>Select category...</option>
                         </select>
                     </div>
@@ -329,11 +653,9 @@
                         <button type="submit" class="flex-1 btn-add-transaction">
                             Save
                         </button>
-                        <button
-                            type="button"
-                            class="flex-1 px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50"
-                            onclick="closeAddTransactionModal()"
-                        >
+                        <button type="button"
+                            class="flex-1 px-4 py-2 form-input rounded-lg font-medium form-label"
+                            onclick="closeAddTransactionModal()">
                             Cancel
                         </button>
                     </div>
@@ -344,10 +666,85 @@
 
     <script>
         /**
+         * Apply the persisted sidebar state as soon as the sidebar DOM exists.
+         * The `sidebar-collapsed` localStorage key keeps the layout stable on
+         * reload so the page does not flash expanded before collapsing.
+         */
+        function initializeSidebar() {
+            const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+            const sidebar = document.getElementById('sidebar');
+            const body = document.body;
+
+            if (!sidebar || !body) {
+                return;
+            }
+
+            sidebar.classList.toggle('collapsed', isCollapsed);
+            body.classList.toggle('sidebar-collapsed', isCollapsed);
+            updateToggleIcon();
+        }
+
+        /**
+         * Toggle sidebar between expanded and collapsed states
+         */
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const body = document.body;
+
+            if (!sidebar || !body) {
+                return;
+            }
+
+            const isCollapsed = sidebar.classList.toggle('collapsed');
+
+            if (isCollapsed) {
+                body.classList.add('sidebar-collapsed');
+            } else {
+                body.classList.remove('sidebar-collapsed');
+            }
+
+            // Save state to localStorage
+            localStorage.setItem('sidebar-collapsed', isCollapsed);
+            updateToggleIcon();
+        }
+
+        /**
+         * Update the toggle icon direction based on sidebar state
+         */
+        function updateToggleIcon() {
+            const sidebar = document.getElementById('sidebar');
+            if (!sidebar) {
+                return;
+            }
+
+            const action = sidebar.classList.contains('collapsed') ? 'Expand' : 'Collapse';
+            const icon = document.getElementById('toggle-icon');
+            const toggleButton = document.getElementById('btn-collapse-switch');
+            const label = document.getElementById('collapse-label');
+
+            if (!icon || !toggleButton || !label) {
+                return;
+            }
+
+            if (action === 'Expand') {
+                icon.textContent = '›'; // Right chevron when collapsed
+            } else {
+                icon.textContent = '‹'; // Left chevron when expanded
+            }
+
+            toggleButton.setAttribute('aria-label', action + ' sidebar');
+            toggleButton.setAttribute('title', action + ' sidebar');
+            label.textContent = action;
+        }
+
+        /**
          * Open the Add Transaction modal
          */
         function openAddTransactionModal() {
             const modal = document.getElementById('add-transaction-modal');
+            if (!modal) {
+                return;
+            }
             modal.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         }
@@ -363,6 +760,9 @@
             }
 
             const modal = document.getElementById('add-transaction-modal');
+            if (!modal) {
+                return;
+            }
             modal.classList.add('hidden');
             document.body.style.overflow = 'auto';
         }
@@ -388,8 +788,8 @@
 
                 // Match if: route matches start of pathname, OR href matches current path, OR dashboard for root
                 const isActive = (route && current.startsWith('/' + route)) ||
-                                current === href ||
-                                (route === 'dashboard' && current === '/');
+                    current === href ||
+                    (route === 'dashboard' && current === '/');
 
                 if (isActive) {
                     item.classList.add('active');
@@ -397,10 +797,14 @@
             });
         }
 
-        // Initialize on page load
+        // Initialize sidebar state immediately once the sidebar DOM exists.
+        initializeSidebar();
+
+        // Initialize remaining DOM-dependent behavior on page load.
         document.addEventListener('DOMContentLoaded', setActiveNav);
     </script>
 
     {% block extra_js %}{% endblock %}
 </body>
+
 </html>

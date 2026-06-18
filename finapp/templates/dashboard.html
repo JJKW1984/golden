@@ -7,18 +7,18 @@
 
     <!-- Header Section: Greeting + Date -->
     <div class="mb-8">
-        <h1 class="text-4xl font-bold text-gray-900">{{ dashboard.greeting }}</h1>
-        <p class="text-lg text-gray-600 mt-2">📅 {{ dashboard.date }}</p>
+        <h1 class="text-4xl font-bold page-title">{{ dashboard.greeting }}</h1>
+        <p class="text-lg text-muted mt-2">📅 {{ dashboard.date }}</p>
     </div>
 
     <!-- Streak Card: Prominent Display -->
-    <div class="bg-gradient-to-br from-teal-50 to-sky-50 rounded-xl shadow-md p-8 mb-8 border border-teal-100">
+    <div class="card-accent card-accent-teal rounded-xl shadow-md p-8 mb-8">
         <div class="flex items-center gap-4">
             <div class="text-6xl">🔥</div>
             <div>
-                <p class="text-sm font-medium text-gray-600 uppercase tracking-wide">Current Streak</p>
-                <p class="text-5xl font-bold text-teal-600 mt-1">{{ dashboard.streak }}</p>
-                <p class="text-sm text-gray-600 mt-2">
+                <p class="text-sm font-medium text-muted uppercase tracking-wide">Current Streak</p>
+                <p class="text-5xl font-bold text-teal mt-1">{{ dashboard.streak }}</p>
+                <p class="text-sm text-muted mt-2">
                     {% if dashboard.streak > 0 %}
                         You're doing great! Keep checking in daily.
                     {% else %}
@@ -31,117 +31,117 @@
 
     <!-- Current Mission Card: Read-only Stub -->
     {% if dashboard.current_mission %}
-    <div class="bg-white rounded-xl shadow-md p-6 mb-8 border border-gray-200">
-        <h2 class="text-lg font-bold text-gray-900 mb-4">Current Mission</h2>
-        <p class="text-base text-gray-700 font-semibold mb-3">{{ dashboard.current_mission.title }}</p>
+    <div class="surface shadow-md p-6 mb-8">
+        <h2 class="text-lg font-bold section-title mb-4">Current Mission</h2>
+        <p class="text-base text-primary-color font-semibold mb-3">{{ dashboard.current_mission.title }}</p>
 
         <!-- Progress Bar -->
-        <div class="bg-gray-100 rounded-full h-3 mb-3 overflow-hidden">
-            <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-300"
-                 style="width: {{ dashboard.current_mission.progress }}%;"></div>
+        <div class="rounded-full h-3 mb-3 overflow-hidden" style="background-color: var(--bg-tertiary)">
+            <div class="h-3 rounded-full transition-all duration-300"
+                 style="width: {{ dashboard.current_mission.progress }}%; background: linear-gradient(90deg, var(--color-info), var(--color-teal));"></div>
         </div>
 
         <!-- Progress Stats -->
-        <div class="flex justify-between items-center text-sm text-gray-600">
+        <div class="flex justify-between items-center text-sm text-muted">
             <span>Progress: {{ dashboard.current_mission.progress }}%</span>
             <span>Target: {{ dashboard.current_mission.target }}</span>
         </div>
 
-        <p class="text-xs text-gray-500 mt-4">
+        <p class="text-xs text-muted mt-4">
             🔒 Read-only view. Edit missions in Phase 8.
         </p>
     </div>
     {% else %}
-    <div class="bg-white rounded-xl shadow-md p-6 mb-8 border border-gray-200">
-        <h2 class="text-lg font-bold text-gray-900 mb-2">Current Mission</h2>
-        <p class="text-gray-600 mb-4">No active mission yet. Open Reviews to create one.</p>
-        <a href="/reviews" class="inline-flex items-center px-4 py-2 rounded-lg font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-200">
+    <div class="surface shadow-md p-6 mb-8">
+        <h2 class="text-lg font-bold section-title mb-2">Current Mission</h2>
+        <p class="text-muted mb-4">No active mission yet. Open Reviews to create one.</p>
+        <a href="/reviews" class="inline-flex items-center px-4 py-2 rounded-lg font-medium text-white transition-colors duration-200" style="background-color: var(--color-info);">
             Open Reviews
         </a>
     </div>
     {% endif %}
 
     <!-- This Week Pulse: Spending vs Target -->
-    <div class="bg-white rounded-xl shadow-md p-6 mb-8 border border-gray-200">
-        <h2 class="text-lg font-bold text-gray-900 mb-4">This Week Pulse</h2>
+    <div class="surface shadow-md p-6 mb-8">
+        <h2 class="text-lg font-bold section-title mb-4">This Week Pulse</h2>
         {% set pulse = dashboard.this_week_pulse %}
         {% set remaining_cents = pulse.remaining_cents %}
 
         <!-- Main Spending Summary -->
         <div class="mb-6">
             {% if pulse.target_cents > 0 %}
-                <p class="text-base text-gray-700 font-semibold mb-2">
-                    You've spent <span class="text-lg font-bold text-gray-900">${{ (pulse.spent_cents / 100) | round(2) }}</span>
+                <p class="text-base text-primary-color font-semibold mb-2">
+                    You've spent <span class="text-lg font-bold page-title">${{ (pulse.spent_cents / 100) | round(2) }}</span>
                     of ${{ (pulse.target_cents / 100) | round(2) }} this week
                 </p>
             {% else %}
-                <p class="text-base text-gray-700 font-semibold mb-2">
-                    You've spent <span class="text-lg font-bold text-gray-900">${{ (pulse.spent_cents / 100) | round(2) }}</span>
+                <p class="text-base text-primary-color font-semibold mb-2">
+                    You've spent <span class="text-lg font-bold page-title">${{ (pulse.spent_cents / 100) | round(2) }}</span>
                     this week
                 </p>
             {% endif %}
 
             <!-- Progress Bar with Color Coding -->
-            <div class="bg-gray-100 rounded-full h-4 mb-2 overflow-hidden">
-                <div class="{% if pulse.is_over_budget %}bg-gradient-to-r from-amber-400 to-amber-600{% else %}bg-gradient-to-r from-teal-400 to-teal-600{% endif %} h-4 rounded-full transition-all duration-300"
-                     style="width: {{ pulse.percentage }}%;"></div>
+            <div class="rounded-full h-4 mb-2 overflow-hidden" style="background-color: var(--bg-tertiary)">
+                <div class="h-4 rounded-full transition-all duration-300"
+                     style="width: {{ pulse.percentage }}%; background: {% if pulse.is_over_budget %}linear-gradient(90deg, var(--color-warning), var(--color-gold)){% else %}linear-gradient(90deg, var(--color-teal), var(--color-success)){% endif %};"></div>
             </div>
 
             <!-- Status Text -->
             <div class="flex justify-between items-center text-sm">
-                <span class="font-semibold text-gray-900">{{ pulse.usage_percentage }}% used</span>
+                <span class="font-semibold page-title">{{ pulse.usage_percentage }}% used</span>
                 {% if pulse.is_over_budget %}
-                    <span class="text-amber-600 font-medium">Over by ${{ ((0 - remaining_cents) / 100) | round(2) }}</span>
+                    <span class="text-warning font-medium">Over by ${{ ((0 - remaining_cents) / 100) | round(2) }}</span>
                 {% else %}
-                    <span class="text-teal-600 font-medium">Remaining ${{ (remaining_cents / 100) | round(2) }}</span>
+                    <span class="text-teal font-medium">Remaining ${{ (remaining_cents / 100) | round(2) }}</span>
                 {% endif %}
             </div>
         </div>
     </div>
 
     <!-- Next Right Action: Prominent CTA -->
-    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl shadow-lg p-8 mb-8 border-2 border-blue-200">
-        <h2 class="text-sm font-medium text-gray-600 uppercase tracking-widest mb-3">Next Right Action</h2>
+    <div class="card-accent card-accent-info rounded-xl shadow-lg p-8 mb-8">
+        <h2 class="text-sm font-medium text-muted uppercase tracking-widest mb-3">Next Right Action</h2>
 
-        <h3 class="text-2xl font-bold text-gray-900 mb-2">{{ dashboard.next_right_action.label }}</h3>
+        <h3 class="text-2xl font-bold section-title mb-2">{{ dashboard.next_right_action.label }}</h3>
 
         {% if dashboard.next_right_action.hint %}
-            <p class="text-base text-gray-700 mb-6">{{ dashboard.next_right_action.hint }}</p>
+            <p class="text-base text-primary-color mb-6">{{ dashboard.next_right_action.hint }}</p>
         {% endif %}
 
         <!-- Action Button -->
         <div class="mt-6">
             {% if dashboard.next_right_action.action == 'complete_setup' %}
-                <a href="/setup" class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-200">
+                <a href="/setup" class="inline-flex items-center px-6 py-3 text-white font-semibold rounded-lg transition-colors duration-200" style="background-color: var(--color-info);">
                     Get Started →
                 </a>
             {% elif dashboard.next_right_action.action == 'log_income' %}
-                <button onclick="openAddTransactionModal()" class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-200">
+                <button onclick="openAddTransactionModal()" class="inline-flex items-center px-6 py-3 text-white font-semibold rounded-lg transition-colors duration-200" style="background-color: var(--color-info);">
                     Log Income →
                 </button>
             {% elif dashboard.next_right_action.action == 'allocate_paychecks' %}
-                <a href="/budget/allocate" class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-200">
+                <a href="/budget/allocate" class="inline-flex items-center px-6 py-3 text-white font-semibold rounded-lg transition-colors duration-200" style="background-color: var(--color-info);">
                     Allocate Now →
                 </a>
             {% elif dashboard.next_right_action.action == 'do_review' %}
-                <a href="/reviews" class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-200">
+                <a href="/reviews" class="inline-flex items-center px-6 py-3 text-white font-semibold rounded-lg transition-colors duration-200" style="background-color: var(--color-info);">
                     Do Review →
                 </a>
             {% elif dashboard.next_right_action.action == 'close_previous_month' %}
-                <a href="/reviews/close-month" class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-200">
+                <a href="/reviews/close-month" class="inline-flex items-center px-6 py-3 text-white font-semibold rounded-lg transition-colors duration-200" style="background-color: var(--color-info);">
                     Close Month →
                 </a>
             {% elif dashboard.next_right_action.action == 'log_debt_payment' %}
-                <button onclick="openAddTransactionModal()" class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-200">
+                <button onclick="openAddTransactionModal()" class="inline-flex items-center px-6 py-3 text-white font-semibold rounded-lg transition-colors duration-200" style="background-color: var(--color-info);">
                     Log Payment →
                 </button>
             {% elif dashboard.next_right_action.action == 'log_recent_activity' %}
-                <button onclick="openAddTransactionModal()" class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-200">
+                <button onclick="openAddTransactionModal()" class="inline-flex items-center px-6 py-3 text-white font-semibold rounded-lg transition-colors duration-200" style="background-color: var(--color-info);">
                     Log Activity →
                 </button>
             {% else %}
                 <!-- on_track state: Show motivational button -->
-                <button onclick="openAddTransactionModal()" class="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors duration-200">
+                <button onclick="openAddTransactionModal()" class="inline-flex items-center px-6 py-3 text-white font-semibold rounded-lg transition-colors duration-200" style="background-color: var(--color-success);">
                     + Log Transaction
                 </button>
             {% endif %}
@@ -150,9 +150,9 @@
 
     <!-- Mobile-Friendly Quick Action: Add Transaction (if not in on_track state) -->
     {% if dashboard.next_right_action.action != 'on_track' %}
-    <div class="bg-white rounded-lg p-4 border border-gray-200 text-center text-sm text-gray-600 md:hidden">
+    <div class="surface p-4 text-center text-sm text-muted md:hidden">
         <p>Can't find what you need?</p>
-        <button onclick="openAddTransactionModal()" class="text-blue-600 font-medium hover:underline">
+        <button onclick="openAddTransactionModal()" class="link-info font-medium hover:underline">
             Quick Add Transaction
         </button>
     </div>

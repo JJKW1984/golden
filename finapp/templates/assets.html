@@ -5,17 +5,17 @@
 {% block content %}
 <div class="container mx-auto px-4 py-8 space-y-6">
     <h1 class="text-3xl font-bold">Assets</h1>
-    <p class="text-gray-600">Manually updated balance snapshots, used for your net worth.</p>
+    <p class="text-muted">Manually updated balance snapshots, used for your net worth.</p>
 
     {% if assets %}
     <div class="space-y-3">
         {% for asset in assets %}
-        <div class="border rounded-lg p-4 bg-white flex justify-between items-center">
+        <div class="surface p-4 flex justify-between items-center">
             <div>
                 <h4 class="font-semibold">{{ asset.name }}</h4>
-                <p class="text-gray-600 text-sm">${{ "%.2f"|format(asset.balance) }}</p>
+                <p class="text-muted text-sm">${{ "%.2f"|format(asset.balance) }}</p>
             </div>
-            <button class="bg-gray-200 hover:bg-gray-300 px-4 py-1.5 rounded text-sm font-medium text-gray-800"
+            <button class="px-4 py-1.5 rounded text-sm font-medium" style="background-color: var(--bg-tertiary); color: var(--text-primary);"
                     onclick="openUpdateAssetModal({{ asset.id|tojson }}, {{ asset.name|tojson }}, {{ asset.balance|tojson }})">
                 Update Balance
             </button>
@@ -23,12 +23,12 @@
         {% endfor %}
     </div>
     {% else %}
-    <div class="bg-gray-50 rounded-lg p-8 text-center">
-        <p class="text-gray-700">No asset accounts yet. Add your first balance snapshot to start tracking net worth.</p>
+    <div class="rounded-lg p-8 text-center" style="background-color: var(--bg-tertiary);">
+        <p class="text-primary-color">No asset accounts yet. Add your first balance snapshot to start tracking net worth.</p>
     </div>
     {% endif %}
 
-    <button class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded font-medium"
+    <button class="text-white px-6 py-2 rounded font-medium" style="background-color: var(--color-info);"
             onclick="openAddAssetModal()">
         Add Asset Account
     </button>

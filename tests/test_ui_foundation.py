@@ -154,6 +154,21 @@ class TestThemeJSContent:
         # If no saved preference, must default to 'light'
         assert "'light'" in self.content or '"light"' in self.content
 
+    def test_set_theme_function_defined(self):
+        assert "function setTheme" in self.content or "setTheme =" in self.content
+
+    def test_set_theme_exposed_globally(self):
+        assert "window.setTheme" in self.content
+
+    def test_system_mode_supported(self):
+        assert "system" in self.content
+
+    def test_prefers_color_scheme_used(self):
+        assert "prefers-color-scheme" in self.content
+
+    def test_matchmedia_used(self):
+        assert "matchMedia" in self.content
+
 
 # ---------------------------------------------------------------------------
 # base.html integration
@@ -177,17 +192,13 @@ class TestBaseHTMLIntegration:
         assert theme_js_pos < tailwind_pos, \
             "theme.js must appear before Tailwind CDN script in base.html"
 
-    def test_theme_toggle_button_present(self):
-        assert "js-theme-toggle" in self.content
-
-    def test_theme_toggle_calls_toggle_function(self):
-        assert "toggleTheme()" in self.content
+    def test_sidebar_theme_toggle_removed(self):
+        # The theme control now lives in Settings, not the sidebar.
+        assert "js-theme-toggle" not in self.content
+        assert "toggleTheme()" not in self.content
 
     def test_theme_toggle_has_aria_label(self):
         assert 'aria-label=' in self.content
-
-    def test_theme_icon_span_present(self):
-        assert 'js-theme-icon' in self.content
 
 
 # ---------------------------------------------------------------------------
@@ -240,3 +251,62 @@ class TestStaticFilesServed:
         content_type = response.headers.get("content-type", "")
         # application/javascript or text/javascript
         assert "javascript" in content_type
+
+
+class TestSidebarCollapseSwitch:
+    @pytest.fixture(autouse=True)
+    def html(self):
+        self.content = (Path(__file__).parent.parent / "finapp" / "templates" / "base.html").read_text()
+
+    def test_collapse_switch_present(self):
+        assert "btn-collapse-switch" in self.content
+
+    def test_collapse_switch_is_after_add_transaction(self):
+        # Add Transaction must appear before the collapse switch (switch is last).
+        add_pos = self.content.index("openAddTransactionModal()")
+        switch_pos = self.content.index('id="btn-collapse-switch"')
+        assert add_pos < switch_pos, "collapse switch must be the last sidebar element"
+
+    def test_add_transaction_in_nav(self):
+        # Add Transaction now lives inside the nav list, not a separate footer.
+        nav_start = self.content.index('id="sidebar-nav"')
+        nav_end = self.content.index("</nav>", nav_start)
+        assert "openAddTransactionModal()" in self.content[nav_start:nav_end]
+
+    def test_switch_has_sliding_knob(self):
+        assert "collapse-knob" in self.content
+
+    def test_switch_updates_accessible_action_text(self):
+        assert 'id="collapse-label"' in self.content
+        assert "const action = sidebar.classList.contains('collapsed') ? 'Expand' : 'Collapse'" in self.content
+        assert "setAttribute('aria-label'" in self.content
+        assert "setAttribute('title'" in self.content
+        assert "sidebar'" in self.content
+        assert "label.textContent = action" in self.content
+
+    def test_sidebar_initializes_synchronously(self):
+        # Persisted sidebar state should be applied by the inline script itself,
+        # not deferred to the window load event.
+        assert 'onload="initializeSidebar()"' not in self.content
+        assert "initializeSidebar();" in self.content
+
+    def test_sidebar_initializer_is_called_after_definition(self):
+        definition_pos = self.content.index("function initializeSidebar()")
+        init_call_pos = self.content.rindex("initializeSidebar();")
+        script_end_pos = self.content.index("</script>", init_call_pos)
+        assert definition_pos < init_call_pos < script_end_pos
+
+
+class TestOnboardingThemeAssets:
+    @pytest.fixture(autouse=True)
+    def html(self):
+        self.content = (Path(__file__).parent.parent / "finapp" / "templates" / "onboarding.html").read_text()
+
+    def test_links_theme_js(self):
+        assert 'src="/static/theme.js"' in self.content
+
+    def test_theme_js_before_tailwind(self):
+        theme_js_pos = self.content.index('/static/theme.js')
+        tailwind_pos = self.content.index('https://cdn.tailwindcss.com')
+        assert theme_js_pos < tailwind_pos, \
+            "theme.js must appear before Tailwind CDN script in onboarding.html"
