@@ -1,0 +1,19 @@
+docs/superpowers/specs/2026-06-18-csv-import-reimplementation-design.md
+  s_5e21d746d7b0e1::t_54306807af43ef 1-223
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "d6e34a93253200bdd2729fc98098eada89814345",
+  "prompts": {},
+  "sessions": {
+    "s_5e21d746d7b0e1": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "5602a71b-308f-40e0-930d-080d2ad6413f",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    }
+  }
+}
