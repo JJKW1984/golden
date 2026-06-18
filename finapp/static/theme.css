@@ -145,6 +145,43 @@ h3 { font-size: 1.125rem; font-weight: 700; line-height: 1.2; }  /* 18px */
 .text-danger  { color: var(--color-danger); }
 
 /* --------------------------------------------------------------------------
+   Semantic surface & text helpers (theme-aware replacements for raw Tailwind)
+   -------------------------------------------------------------------------- */
+
+/* Page section / panel surface — replaces `bg-white border border-gray-200` */
+.surface {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+/* Page-level heading — replaces `text-gray-900` on <h1> */
+.page-title {
+  color: var(--text-primary);
+}
+
+/* Section heading — replaces `text-gray-900` on <h2>/<h3> */
+.section-title {
+  color: var(--text-primary);
+}
+
+/* Themed disabled / placeholder input — replaces `bg-gray-50 text-gray-400` */
+.input-disabled {
+  background-color: var(--bg-tertiary);
+  color: var(--text-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+}
+
+/* Info link / accent text — replaces `text-blue-600` */
+.link-info {
+  color: var(--color-info);
+}
+.link-info:hover {
+  opacity: 0.85;
+}
+
+/* --------------------------------------------------------------------------
    Card Components
    -------------------------------------------------------------------------- */
 

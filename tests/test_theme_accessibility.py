@@ -91,3 +91,31 @@ def test_text_pairings_meet_aa(themes, theme_name, fg, bg):
         f"{theme_name}: {fg} ({vars_[fg]}) on {bg} ({vars_[bg]}) "
         f"= {ratio:.2f}:1, needs >= 4.5:1"
     )
+
+
+class TestSemanticClasses:
+    @pytest.fixture(autouse=True)
+    def css(self):
+        self.content = THEME_CSS.read_text()
+
+    def test_surface_class(self):
+        assert ".surface" in self.content
+
+    def test_page_title_class(self):
+        assert ".page-title" in self.content
+
+    def test_section_title_class(self):
+        assert ".section-title" in self.content
+
+    def test_input_disabled_class(self):
+        assert ".input-disabled" in self.content
+
+    def test_link_info_class(self):
+        assert ".link-info" in self.content
+
+    def test_surface_uses_variables(self):
+        # The .surface rule body must use variables, not raw hex.
+        start = self.content.index(".surface")
+        body = self.content[start:start + 300]
+        assert "var(--bg-primary)" in body
+        assert "var(--border-color)" in body
