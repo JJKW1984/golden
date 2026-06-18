@@ -119,3 +119,22 @@ class TestSemanticClasses:
         body = self.content[start:start + 300]
         assert "var(--bg-primary)" in body
         assert "var(--border-color)" in body
+
+
+class TestBaseChromeThemed:
+    @pytest.fixture(autouse=True)
+    def html(self):
+        self.content = (REPO_ROOT / "finapp" / "templates" / "base.html").read_text()
+
+    def test_no_hardcoded_white_in_style_block(self):
+        style = self.content[self.content.index("<style>"):self.content.index("</style>")]
+        # The chrome must not hardcode white/gray surfaces or text.
+        for raw in ("#ffffff", "#374151", "#4b5563", "#e5e7eb", "#f3f4f6",
+                    "#f9fafb", "#2563eb", "#eff6ff", "#111827", "#4b5563"):
+            assert raw not in style.lower(), f"hardcoded {raw} left in <style> chrome"
+
+    def test_style_block_uses_variables(self):
+        style = self.content[self.content.index("<style>"):self.content.index("</style>")]
+        assert "var(--bg-primary)" in style
+        assert "var(--text-primary)" in style
+        assert "var(--border-color)" in style
