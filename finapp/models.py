@@ -24,6 +24,7 @@ class Account(Base):
     milestones = relationship("Milestone", back_populates="account", cascade="all, delete-orphan")
     asset_accounts = relationship("AssetAccount", back_populates="account", cascade="all, delete-orphan")
     net_worth_snapshots = relationship("NetWorthSnapshot", back_populates="account", cascade="all, delete-orphan")
+    import_drafts = relationship("ImportDraft", back_populates="account", cascade="all, delete-orphan")
 
 
 class Settings(Base):
@@ -100,6 +101,21 @@ class BudgetAllocation(Base):
     account = relationship("Account")
     period = relationship("BudgetPeriod", back_populates="budget_allocations")
     category = relationship("BudgetCategory", back_populates="budget_allocations")
+
+
+class ImportDraft(Base):
+    __tablename__ = "import_drafts"
+
+    id = Column(Integer, primary_key=True)
+    account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
+    expires_at = Column(DateTime, nullable=False)
+    column_map_json = Column(Text, nullable=False)
+    spent_is_negative = Column(Boolean, nullable=False, default=True)
+    rows_json = Column(Text, nullable=False)  # JSON list of normalized row dicts
+    version = Column(Integer, nullable=False, default=1)
+
+    account = relationship("Account", back_populates="import_drafts")
 
 
 class Transaction(Base):
