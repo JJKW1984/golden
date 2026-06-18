@@ -666,7 +666,9 @@
 
     <script>
         /**
-         * Initialize sidebar state from localStorage on page load
+         * Apply the persisted sidebar state as soon as the sidebar DOM exists.
+         * The `sidebar-collapsed` localStorage key keeps the layout stable on
+         * reload so the page does not flash expanded before collapsing.
          */
         function initializeSidebar() {
             const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
@@ -706,15 +708,18 @@
          */
         function updateToggleIcon() {
             const sidebar = document.getElementById('sidebar');
-            const icon = document.getElementById('toggle-icon');
-            const toggleButton = document.getElementById('btn-collapse-switch');
-            const label = document.getElementById('collapse-label');
-
-            if (!sidebar || !icon || !toggleButton || !label) {
+            if (!sidebar) {
                 return;
             }
 
             const action = sidebar.classList.contains('collapsed') ? 'Expand' : 'Collapse';
+            const icon = document.getElementById('toggle-icon');
+            const toggleButton = document.getElementById('btn-collapse-switch');
+            const label = document.getElementById('collapse-label');
+
+            if (!icon || !toggleButton || !label) {
+                return;
+            }
 
             if (action === 'Expand') {
                 icon.textContent = '›'; // Right chevron when collapsed
@@ -722,8 +727,8 @@
                 icon.textContent = '‹'; // Left chevron when expanded
             }
 
-            toggleButton.setAttribute('aria-label', `${action} sidebar`);
-            toggleButton.setAttribute('title', `${action} sidebar`);
+            toggleButton.setAttribute('aria-label', action + ' sidebar');
+            toggleButton.setAttribute('title', action + ' sidebar');
             label.textContent = action;
         }
 

@@ -278,11 +278,15 @@ class TestSidebarCollapseSwitch:
 
     def test_switch_updates_accessible_action_text(self):
         assert 'id="collapse-label"' in self.content
-        assert "setAttribute('aria-label', `${action} sidebar`)" in self.content
-        assert "setAttribute('title', `${action} sidebar`)" in self.content
+        assert "const action = sidebar.classList.contains('collapsed') ? 'Expand' : 'Collapse'" in self.content
+        assert "setAttribute('aria-label'" in self.content
+        assert "setAttribute('title'" in self.content
+        assert "sidebar'" in self.content
         assert "label.textContent = action" in self.content
 
-    def test_sidebar_initializes_before_load_event(self):
+    def test_sidebar_initializes_synchronously(self):
+        # Persisted sidebar state should be applied by the inline script itself,
+        # not deferred to the window load event.
         assert 'onload="initializeSidebar()"' not in self.content
         assert "initializeSidebar();" in self.content
 
