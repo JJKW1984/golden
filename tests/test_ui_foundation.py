@@ -192,17 +192,13 @@ class TestBaseHTMLIntegration:
         assert theme_js_pos < tailwind_pos, \
             "theme.js must appear before Tailwind CDN script in base.html"
 
-    def test_theme_toggle_button_present(self):
-        assert "js-theme-toggle" in self.content
-
-    def test_theme_toggle_calls_toggle_function(self):
-        assert "toggleTheme()" in self.content
+    def test_sidebar_theme_toggle_removed(self):
+        # The theme control now lives in Settings, not the sidebar.
+        assert "js-theme-toggle" not in self.content
+        assert "toggleTheme()" not in self.content
 
     def test_theme_toggle_has_aria_label(self):
         assert 'aria-label=' in self.content
-
-    def test_theme_icon_span_present(self):
-        assert 'js-theme-icon' in self.content
 
 
 # ---------------------------------------------------------------------------

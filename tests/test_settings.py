@@ -125,3 +125,27 @@ def test_reorder_categories(settings_ctx):
 def test_list_categories_scoped_by_account(settings_ctx):
     cats = settings_svc.list_categories(settings_ctx)
     assert all(c.account_id == settings_ctx.account_id for c in cats)
+
+
+# ---------------------------------------------------------------------------
+# Template content: Appearance section
+# ---------------------------------------------------------------------------
+
+from pathlib import Path
+
+SETTINGS_HTML = Path(__file__).parent.parent / "finapp" / "templates" / "settings.html"
+
+
+class TestAppearanceSection:
+    def setup_method(self):
+        self.content = SETTINGS_HTML.read_text()
+
+    def test_appearance_heading_present(self):
+        assert "Appearance" in self.content
+
+    def test_theme_options_present(self):
+        for label in ("Light", "Dark", "System"):
+            assert label in self.content
+
+    def test_calls_set_theme(self):
+        assert "setTheme(" in self.content

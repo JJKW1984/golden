@@ -567,3 +567,20 @@ h3 { font-size: 1.125rem; font-weight: 700; line-height: 1.2; }  /* 18px */
   outline: 2px solid var(--color-info);
   outline-offset: 2px;
 }
+
+/* --------------------------------------------------------------------------
+   Theme Option (Appearance segmented control — Settings page)
+   -------------------------------------------------------------------------- */
+.theme-option {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  border: none;
+  cursor: pointer;
+}
+.theme-option + .theme-option {
+  border-left: 1px solid var(--border-color);
+}
+.theme-option.active {
+  background-color: var(--color-info-light);
+  color: var(--color-info);
+}
