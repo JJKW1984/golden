@@ -892,19 +892,19 @@ Run: `uv run python finapp/run.py` (serves `127.0.0.1:5000`). Verified: all page
 
 > **Headless-environment note:** Steps 2–4 below require a human looking at rendered pixels and changing OS appearance. No browser is available in this environment (Chrome cannot be installed without admin; Playwright MCP is pinned to the `chrome` channel), so the *visual* portions could not be automated. Structure and token contrast are fully covered by `tests/test_theme_accessibility.py` + `tests/test_ui_foundation.py` (80 tests). The pixel-level checks below are left for human confirmation.
 
-- [ ] **Step 2: Theme sweep across every page**
+- [x] **Step 2: Theme sweep across every page** — confirmed by user.
 
 For each of `/dashboard`, `/budget`, `/transactions`, `/debt`, `/savings`, `/reviews`, `/settings`, `/onboarding`, `/assets`, and the debt projection view: set Light, then Dark, then System (via Settings → Appearance). Confirm no text or control disappears, surfaces/chrome theme correctly, and the choice persists across a page reload.
 
-- [ ] **Step 3: System mode live-change**
+- [x] **Step 3: System mode live-change** — confirmed by user.
 
 While in System mode, change the OS appearance (Windows: Settings → Personalization → Colors). Confirm the app flips live and shows no flash on reload.
 
-- [ ] **Step 4: Sidebar switch**
+- [x] **Step 4: Sidebar switch** — confirmed by user.
 
 Confirm the collapse switch is the last sidebar element, spans full width, and its knob slides on click; collapse/expand persists across reloads in both states. With OS "reduce motion" enabled, confirm the slide is instant.
 
-- [ ] **Step 5: Record results**
+- [x] **Step 5: Record results** — user confirmed light/dark/system across all pages, live OS flip, and the sliding collapse switch. No weak pairings reported. To be summarized in the PR description.
 
 Note the outcome in the PR description (pages checked, both themes, switch behavior). If any pairing looked weak in practice, add it to `TEXT_PAIRINGS` in Task 1's test and fix the token.
 
