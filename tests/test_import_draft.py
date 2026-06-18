@@ -84,3 +84,37 @@ def test_normalize_rows_positive_toggle():
     out = normalize_rows(rows, cmap, spent_is_negative=False)
     assert out[0]["direction"] == "out"
     assert out[0]["amount_cents"] == 4500
+
+
+from datetime import date as _date
+from finapp.services.ledger import create_transaction
+from finapp.services.csv_import import build_normalized_preview, summarize
+
+
+def test_build_normalized_preview_flags_db_and_batch_dupes(import_ctx):
+    create_transaction(
+        import_ctx, date=_date(2026, 6, 1), amount_cents=4500,
+        direction="out", payee="Coffee Shop", is_imported=True,
+    )
+    rows = [
+        {"Date": "2026-06-01", "Amount": "-45.00", "Description": "Coffee Shop"},  # db dup
+        {"Date": "2026-06-03", "Amount": "-9.99", "Description": "New"},           # new
+        {"Date": "2026-06-03", "Amount": "-9.99", "Description": "New"},           # batch dup
+    ]
+    cmap = {"date": "Date", "amount": "Amount", "payee": "Description"}
+    out = build_normalized_preview(import_ctx, rows, cmap, spent_is_negative=True)
+    assert out[0]["is_duplicate"] is True and out[0]["selected"] is False
+    assert out[1]["is_duplicate"] is False and out[1]["selected"] is True
+    assert out[2]["is_duplicate"] is True and out[2]["selected"] is False
+
+
+def test_summarize_counts(import_ctx):
+    rows = [
+        {"Date": "2026-06-01", "Amount": "-45.00", "Description": "A"},   # valid
+        {"Date": "bad", "Amount": "-1.00", "Description": "B"},           # invalid
+        {"Date": "2026-06-01", "Amount": "-45.00", "Description": "A"},   # batch dup of first
+    ]
+    cmap = {"date": "Date", "amount": "Amount", "payee": "Description"}
+    out = build_normalized_preview(import_ctx, rows, cmap)
+    s = summarize(out)
+    assert s == {"total": 3, "valid": 1, "invalid": 1, "duplicate": 1}

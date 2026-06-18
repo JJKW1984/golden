@@ -249,6 +249,45 @@ def normalize_rows(rows: list[dict], column_map: dict, spent_is_negative: bool =
     return normalized
 
 
+def mark_duplicates(ctx: AccountContext, normalized: list[dict]) -> list[dict]:
+    """Set is_duplicate (DB hash match OR earlier-in-batch match) on valid rows
+    and clear their selection. Invalid rows are never duplicates."""
+    seen_hashes = set()
+    for r in normalized:
+        if not r["valid"]:
+            r["is_duplicate"] = False
+            continue
+        h = r["import_hash"]
+        db_dup = ctx.db.query(Transaction).filter_by(
+            account_id=ctx.account_id, import_hash=h
+        ).first() is not None
+        is_dup = db_dup or h in seen_hashes
+        seen_hashes.add(h)
+        r["is_duplicate"] = is_dup
+        if is_dup:
+            r["selected"] = False
+    return normalized
+
+
+def build_normalized_preview(
+    ctx: AccountContext, rows: list[dict], column_map: dict, spent_is_negative: bool = True
+) -> list[dict]:
+    """Normalize raw rows then apply duplicate detection. Returns the normalized
+    rows ready to persist in a draft and return to the browser."""
+    normalized = normalize_rows(rows, column_map, spent_is_negative)
+    return mark_duplicates(ctx, normalized)
+
+
+def summarize(rows: list[dict]) -> dict:
+    """Summary counts for a normalized preview. 'valid' = importable
+    (parsed OK and not a duplicate)."""
+    total = len(rows)
+    invalid = sum(1 for r in rows if not r["valid"])
+    duplicate = sum(1 for r in rows if r["is_duplicate"])
+    importable = sum(1 for r in rows if r["valid"] and not r["is_duplicate"])
+    return {"total": total, "valid": importable, "invalid": invalid, "duplicate": duplicate}
+
+
 def list_needs_category(ctx: AccountContext):
     """
     Return non-deleted transactions for ctx.account_id with category_id IS NULL,
