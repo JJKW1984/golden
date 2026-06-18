@@ -1,0 +1,24 @@
+tests/test_settings.py
+  s_710b0e62da86bf::t_a6c759d8377976 128-151
+tests/test_ui_foundation.py
+  s_710b0e62da86bf::t_66e3daf3a5546c 195-198
+finapp/templates/settings.html
+  s_710b0e62da86bf::t_71a094dfdcd7e0 51,56-59,65,68-69,71,85-86,100,106,111,116,128-129,189
+  s_710b0e62da86bf::t_4d8fa61e900479 15-43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "2c0a98614b7985fafacbe3f4c758144ae335ba5a",
+  "prompts": {},
+  "sessions": {
+    "s_710b0e62da86bf": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cf87ae90-500e-463c-91f0-6e5804135dcd",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    }
+  }
+}
