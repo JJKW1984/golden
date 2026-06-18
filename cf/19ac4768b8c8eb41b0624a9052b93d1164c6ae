@@ -1,0 +1,19 @@
+docs/superpowers/plans/2026-06-17-dark-light-accessibility-and-sidebar-collapse.md
+  s_710b0e62da86bf::t_a2114e5a7c048a 1-924
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "cf19ac4768b8c8eb41b0624a9052b93d1164c6ae",
+  "prompts": {},
+  "sessions": {
+    "s_710b0e62da86bf": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cf87ae90-500e-463c-91f0-6e5804135dcd",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    }
+  }
+}
