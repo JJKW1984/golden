@@ -8,12 +8,15 @@ import csv
 import io
 from dataclasses import dataclass
 from datetime import date, datetime
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 from finapp.deps import AccountContext
 from finapp.money import to_cents
 from finapp.models import Transaction
 from finapp.services.ledger import compute_import_hash
+
+
+_OUT_WORDS = {"debit", "withdrawal", "payment", "out", "expense", "w"}
 
 
 @dataclass
@@ -93,16 +96,11 @@ def build_preview(
         amount_cents = to_cents(abs(amount_decimal))
 
         # Determine direction
-        if "direction" in column_map:
-            direction_str = row.get(column_map["direction"], "").strip().lower()
-            _out_words = {"debit", "withdrawal", "payment", "out", "expense", "w"}
-            direction = "out" if direction_str in _out_words else "in"
-        else:
-            # Use sign of amount with toggle
-            if spent_is_negative:
-                direction = "out" if amount_decimal < 0 else "in"
-            else:
-                direction = "out" if amount_decimal > 0 else "in"
+        has_direction_col = "direction" in column_map
+        direction_raw = row.get(column_map.get("direction", ""), "") if has_direction_col else ""
+        direction = _resolve_direction(
+            amount_decimal, direction_raw, has_direction_col, spent_is_negative
+        )
 
         # Parse payee
         payee = row.get(column_map.get("payee", ""), "").strip()
@@ -164,6 +162,91 @@ def _parse_amount_to_decimal(amount_str: str) -> Decimal:
     # Remove currency symbols, commas, and spaces
     cleaned = amount_str.replace("$", "").replace(",", "").replace(" ", "")
     return Decimal(cleaned)
+
+
+def _safe_parse_date(date_str: str):
+    """Like _parse_date but returns None instead of raising on bad input."""
+    if not date_str or not date_str.strip():
+        return None
+    try:
+        return _parse_date(date_str.strip())
+    except ValueError:
+        return None
+
+
+def _safe_parse_amount(amount_str: str):
+    """Like _parse_amount_to_decimal but returns None instead of raising."""
+    if amount_str is None or str(amount_str).strip() == "":
+        return None
+    try:
+        return _parse_amount_to_decimal(str(amount_str).strip())
+    except (InvalidOperation, ValueError):
+        return None
+
+
+def _resolve_direction(amount_decimal, direction_raw, has_direction_col, spent_is_negative):
+    """Resolve 'in'/'out'. With a direction column, classify by out-words;
+    otherwise use the amount's sign with the spent_is_negative toggle."""
+    if has_direction_col:
+        return "out" if (direction_raw or "").strip().lower() in _OUT_WORDS else "in"
+    value = amount_decimal if amount_decimal is not None else Decimal(0)
+    if spent_is_negative:
+        return "out" if value < 0 else "in"
+    return "out" if value > 0 else "in"
+
+
+def normalize_rows(rows: list[dict], column_map: dict, spent_is_negative: bool = True) -> list[dict]:
+    """Normalize raw CSV rows into the shared normalized-row schema.
+
+    Records per-row parse problems in 'issues' instead of aborting the batch.
+    Does NOT touch the database; duplicate flags are applied later by
+    mark_duplicates(). amount_cents is always a non-negative magnitude.
+    """
+    has_direction_col = "direction" in column_map
+    normalized = []
+
+    for row_id, row in enumerate(rows):
+        issues = []
+
+        raw_date = row.get(column_map.get("date", ""), "") or ""
+        parsed_date = _safe_parse_date(raw_date)
+        if parsed_date is None:
+            issues.append("date")
+
+        raw_amount = row.get(column_map.get("amount", ""), "") or ""
+        amount_decimal = _safe_parse_amount(raw_amount)
+        if amount_decimal is None:
+            issues.append("amount")
+            amount_cents = 0
+        else:
+            amount_cents = to_cents(abs(amount_decimal))
+
+        direction_raw = row.get(column_map.get("direction", ""), "") if has_direction_col else ""
+        direction = _resolve_direction(
+            amount_decimal, direction_raw, has_direction_col, spent_is_negative
+        )
+
+        payee = (row.get(column_map.get("payee", ""), "") or "").strip()
+
+        valid = not issues
+        import_hash = (
+            compute_import_hash(parsed_date, amount_cents, payee) if valid else None
+        )
+
+        normalized.append({
+            "row_id": row_id,
+            "date": parsed_date.isoformat() if parsed_date else raw_date.strip(),
+            "amount_cents": amount_cents,
+            "direction": direction,
+            "payee": payee,
+            "import_hash": import_hash,
+            "is_duplicate": False,
+            "selected": valid,
+            "issues": issues,
+            "valid": valid,
+        })
+
+    return normalized
 
 
 def list_needs_category(ctx: AccountContext):

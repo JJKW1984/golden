@@ -35,3 +35,52 @@ def test_import_draft_table_round_trips(import_ctx):
     assert loaded.spent_is_negative is True
     assert loaded.rows_json == "[]"
     assert loaded.version == 1
+
+
+from finapp.services.csv_import import normalize_rows
+
+
+def test_normalize_rows_valid_row():
+    rows = [{"Date": "2026-06-01", "Amount": "-45.00", "Description": "Coffee Shop"}]
+    cmap = {"date": "Date", "amount": "Amount", "payee": "Description"}
+    out = normalize_rows(rows, cmap, spent_is_negative=True)
+    assert len(out) == 1
+    r = out[0]
+    assert r["row_id"] == 0
+    assert r["date"] == "2026-06-01"
+    assert r["amount_cents"] == 4500
+    assert r["direction"] == "out"
+    assert r["payee"] == "Coffee Shop"
+    assert r["issues"] == []
+    assert r["valid"] is True
+    assert r["selected"] is True
+    assert r["import_hash"] is not None
+
+
+def test_normalize_rows_bad_date_is_issue_not_crash():
+    rows = [{"Date": "not-a-date", "Amount": "-45.00", "Description": "X"}]
+    cmap = {"date": "Date", "amount": "Amount", "payee": "Description"}
+    out = normalize_rows(rows, cmap)
+    r = out[0]
+    assert "date" in r["issues"]
+    assert r["valid"] is False
+    assert r["selected"] is False
+    assert r["import_hash"] is None
+
+
+def test_normalize_rows_bad_amount_is_issue():
+    rows = [{"Date": "2026-06-01", "Amount": "abc", "Description": "X"}]
+    cmap = {"date": "Date", "amount": "Amount", "payee": "Description"}
+    out = normalize_rows(rows, cmap)
+    r = out[0]
+    assert "amount" in r["issues"]
+    assert r["valid"] is False
+    assert r["amount_cents"] == 0
+
+
+def test_normalize_rows_positive_toggle():
+    rows = [{"Date": "2026-06-01", "Amount": "45.00", "Description": "Store"}]
+    cmap = {"date": "Date", "amount": "Amount", "payee": "Description"}
+    out = normalize_rows(rows, cmap, spent_is_negative=False)
+    assert out[0]["direction"] == "out"
+    assert out[0]["amount_cents"] == 4500
