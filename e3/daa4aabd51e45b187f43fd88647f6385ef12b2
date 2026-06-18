@@ -1,0 +1,28 @@
+finapp/routers/settings.py
+  s_24cdc708beb972::t_418fac25d4b575 46-60
+  s_24cdc708beb972::t_11ad532c15c697 232-237,252,255,258-263,266-269,304
+  s_24cdc708beb972::t_ac9edc04b0f8ec 275,279,283-287,290-298,300-303,305-311
+  s_24cdc708beb972::t_7a6effcfc7e17a 15
+tests/integration/test_phase10_import_settings.py
+  s_24cdc708beb972::t_d416eb5f4f8c56 163,167-173,265-266
+  s_24cdc708beb972::t_93724baff40556 195-205,207,209,214,224-264
+  s_24cdc708beb972::t_4b14e445fe74d9 291
+finapp/services/csv_import.py
+  s_24cdc708beb972::t_d0156bec171f13 199-201
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "e3daa4aabd51e45b187f43fd88647f6385ef12b2",
+  "prompts": {},
+  "sessions": {
+    "s_24cdc708beb972": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "65397869-a69a-405f-9719-3ad9822ef041",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    }
+  }
+}
