@@ -291,3 +291,14 @@ def test_reconciliation_green_after_mixed_duplicate_import(client, ctx):
     _confirm_all_valid(client)  # duplicate auto-excluded, new rows imported
     report = recompute_balances(ctx.db, ctx.account_id)
     assert report["total_drift"] == 0
+
+
+def test_settings_page_has_import_preview_ui(client):
+    resp = client.get("/settings")
+    assert resp.status_code == 200
+    html = resp.text
+    assert 'id="import-preview"' in html
+    assert 'id="import-result"' in html
+    assert "function previewImport" in html
+    assert "function confirmImport" in html
+    assert "selectAllValid" in html
