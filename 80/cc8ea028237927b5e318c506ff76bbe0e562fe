@@ -1,0 +1,21 @@
+finapp/templates/settings.html
+  s_24cdc708beb972::t_87888db69cdd7d 219-225
+  s_24cdc708beb972::t_a69d15a79d6fb4 263
+  s_24cdc708beb972::t_089a91a4ecb0ae 271
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "80cc8ea028237927b5e318c506ff76bbe0e562fe",
+  "prompts": {},
+  "sessions": {
+    "s_24cdc708beb972": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "65397869-a69a-405f-9719-3ad9822ef041",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    }
+  }
+}
