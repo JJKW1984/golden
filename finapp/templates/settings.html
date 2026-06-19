@@ -216,6 +216,13 @@
 
     function _dollars(cents) { return (cents / 100).toFixed(2); }
 
+    // HTML-escape any server/CSV-derived value before interpolating into markup.
+    function _esc(s) {
+        return String(s).replace(/[&<>"']/g, c => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[c]));
+    }
+
     async function previewImport() {
         const form = document.getElementById('import-form');
         const errEl = document.getElementById('import-error');
@@ -253,7 +260,7 @@
             tr.dataset.rowId = r.row_id;
             tr.innerHTML = `
                 <td class="py-1 pr-2"><input type="checkbox" class="row-select" ${r.selected ? 'checked' : ''}></td>
-                <td class="py-1 pr-2"><input class="row-date form-input px-2 py-1 rounded" value="${r.date}"></td>
+                <td class="py-1 pr-2"><input class="row-date form-input px-2 py-1 rounded" value="${_esc(r.date)}"></td>
                 <td class="py-1 pr-2"><input class="row-amount form-input px-2 py-1 rounded w-24" value="${_dollars(r.amount_cents)}"></td>
                 <td class="py-1 pr-2">
                     <select class="row-direction form-input px-2 py-1 rounded">
@@ -261,7 +268,7 @@
                         <option value="in" ${r.direction === 'in' ? 'selected' : ''}>in</option>
                     </select>
                 </td>
-                <td class="py-1 pr-2"><input class="row-payee form-input px-2 py-1 rounded" value="${r.payee.replace(/"/g, '&quot;')}"></td>
+                <td class="py-1 pr-2"><input class="row-payee form-input px-2 py-1 rounded" value="${_esc(r.payee)}"></td>
                 <td class="py-1 pr-2 text-muted">${status}</td>`;
             tbody.appendChild(tr);
         }
