@@ -97,22 +97,22 @@
         <form id="import-form" onsubmit="event.preventDefault(); previewImport();" enctype="multipart/form-data" class="space-y-4">
             <div>
                 <label class="block text-sm font-medium form-label mb-1">CSV file</label>
-                <input type="file" name="file" accept=".csv" required class="w-full text-sm form-label" />
+                <input type="file" name="file" accept=".csv" required data-testid="csv-file" class="w-full text-sm form-label" />
             </div>
             <div class="grid grid-cols-3 gap-3">
                 <div>
                     <label class="block text-xs font-medium form-label mb-1">Date column</label>
-                    <input name="map_date" value="{{ csv_column_map.get('date', '') }}" placeholder="Date"
+                    <input name="map_date" value="{{ csv_column_map.get('date', '') }}" data-testid="csv-map-date" placeholder="Date"
                         class="w-full px-3 py-2 form-input rounded-lg" />
                 </div>
                 <div>
                     <label class="block text-xs font-medium form-label mb-1">Amount column</label>
-                    <input name="map_amount" value="{{ csv_column_map.get('amount', '') }}" placeholder="Amount"
+                    <input name="map_amount" value="{{ csv_column_map.get('amount', '') }}" data-testid="csv-map-amount" placeholder="Amount"
                         class="w-full px-3 py-2 form-input rounded-lg" />
                 </div>
                 <div>
                     <label class="block text-xs font-medium form-label mb-1">Payee column</label>
-                    <input name="map_payee" value="{{ csv_column_map.get('payee', '') }}" placeholder="Description"
+                    <input name="map_payee" value="{{ csv_column_map.get('payee', '') }}" data-testid="csv-map-payee" placeholder="Description"
                         class="w-full px-3 py-2 form-input rounded-lg" />
                 </div>
             </div>
@@ -123,7 +123,7 @@
                     <option value="false">Positive amounts are money out</option>
                 </select>
             </div>
-            <button type="submit" class="btn-add-transaction">Preview import</button>
+            <button type="submit" data-testid="csv-preview-submit" class="btn-add-transaction">Preview import</button>
             <p id="import-error" class="text-sm mt-2" style="color: var(--amber, #F59E0B);"></p>
         </form>
         <div id="import-preview" class="mt-6 hidden">
