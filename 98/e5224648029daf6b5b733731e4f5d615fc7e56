@@ -1,0 +1,29 @@
+tests/e2e/test_cdn_integrity_e2e.py
+  s_9b9bcbe92992bc::t_364608927b8b2d 1,20-53
+finapp/templates/debt_projection.html
+  s_894ce6fe5af1c0::t_85247425754f66 51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "98e5224648029daf6b5b733731e4f5d615fc7e56",
+  "prompts": {},
+  "sessions": {
+    "s_894ce6fe5af1c0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-acf9ce3edd139774d",
+        "model": "unknown"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    },
+    "s_9b9bcbe92992bc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b2dfc452-5dea-494c-8116-3579b5004e7a",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    }
+  }
+}
