@@ -297,7 +297,7 @@ def confirm_import(
         "errors": [{"row_id": int, "reason": "invalid"|"duplicate", ...}]
     }
     """
-    edits = {k: v.dict(exclude_unset=True) for k, v in body.edits.items()}
+    edits = {k: v.model_dump(exclude_unset=True) for k, v in body.edits.items()}
     try:
         return csv_import_svc.confirm_import(
             ctx, body.draft_id, body.selected_row_ids, edits
