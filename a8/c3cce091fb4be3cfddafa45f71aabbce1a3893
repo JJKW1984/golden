@@ -1,0 +1,19 @@
+docs/superpowers/specs/2026-07-07-e2e-testing-design.md
+  s_3e51b50d0ad087::t_c04e047ba85eab 1-86
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a8c3cce091fb4be3cfddafa45f71aabbce1a3893",
+  "prompts": {},
+  "sessions": {
+    "s_3e51b50d0ad087": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3fb27048-4e4e-4835-8503-44240ca1123a",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    }
+  }
+}
