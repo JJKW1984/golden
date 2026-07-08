@@ -13,7 +13,7 @@ from sqlalchemy.pool import StaticPool
 from finapp.db import Base, get_db
 from finapp.deps import AccountContext, get_account_context
 from finapp.main import app
-from finapp.models import Account
+from finapp.models import Account, BudgetCategory, Settings
 
 
 @dataclass
@@ -93,3 +93,27 @@ def live_server():
         app.dependency_overrides.clear()
         seed_db.close()
         engine.dispose()
+
+
+def seed_account(db, *, setup_complete=True, user_name="Seeded Sam", with_categories=False):
+    """Direct-DB seeding for flow tests that need pre-existing state without
+    walking onboarding in the browser. Operates on account_id=1 (the seam's
+    hardcoded single user). Commits before returning."""
+    db.add(
+        Settings(
+            account_id=1,
+            setup_complete=setup_complete,
+            user_name=user_name,
+            currency_symbol="$",
+        )
+    )
+    if with_categories:
+        db.add_all(
+            [
+                BudgetCategory(account_id=1, name="Groceries", kind="spending",
+                               sort_order=1, is_active=True),
+                BudgetCategory(account_id=1, name="Transport", kind="spending",
+                               sort_order=2, is_active=True),
+            ]
+        )
+    db.commit()
