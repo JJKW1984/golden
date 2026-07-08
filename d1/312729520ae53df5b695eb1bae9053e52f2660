@@ -1,0 +1,21 @@
+docs/superpowers/plans/2026-07-07-fix-stale-sri-hashes.md
+  s_9b9bcbe92992bc::t_99a095e7fb28c9 160
+  s_9b9bcbe92992bc::t_4b1651fd53ba0b 1-159,161-186,188-259
+  s_9b9bcbe92992bc::t_67959a159c3439 187
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d1312729520ae53df5b695eb1bae9053e52f2660",
+  "prompts": {},
+  "sessions": {
+    "s_9b9bcbe92992bc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b2dfc452-5dea-494c-8116-3579b5004e7a",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    }
+  }
+}
