@@ -1,0 +1,25 @@
+tests/e2e/test_smoke_e2e.py
+  s_9b9bcbe92992bc::t_9e8f16ac644fb4 1-5
+tests/e2e/conftest.py
+  s_9b9bcbe92992bc::t_6af39c53d01f23 1-95
+pyproject.toml
+  s_9b9bcbe92992bc::t_1153bea625a86a 22-23
+uv.lock
+  s_9b9bcbe92992bc::t_9e08276ab64e7f 68-128,184,187,205,208,220,222,230,232,240,242,250,252,259,261,269,271,465-483,583-594,633-660,679-690,737-751,806-814,836-844
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "169c353852e7174bcaf87be820f63bd7d43b765f",
+  "prompts": {},
+  "sessions": {
+    "s_9b9bcbe92992bc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b2dfc452-5dea-494c-8116-3579b5004e7a",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    }
+  }
+}
