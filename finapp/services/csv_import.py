@@ -413,7 +413,10 @@ def confirm_import(ctx: AccountContext, draft_id: int,
 
     # Apply edits (unknown row ids are ignored + reported).
     for key, edit in (edits or {}).items():
-        rid = int(key)
+        try:
+            rid = int(key)
+        except (TypeError, ValueError):
+            continue
         if rid not in by_id:
             ignored_row_ids.append(rid)
             continue

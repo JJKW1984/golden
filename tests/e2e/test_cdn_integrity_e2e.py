@@ -35,19 +35,19 @@ def test_chartjs_renders_projection_chart(page, live_server):
     live_server.db.commit()
 
     console_errors = []
+    page_errors = []
     page.on("console", lambda msg: console_errors.append(msg.text) if msg.type == "error" else None)
+    page.on("pageerror", lambda exc: page_errors.append(str(exc)))
 
     page.goto(f"{live_server.url}/debt/{debt.id}/projection")
     page.wait_for_load_state("networkidle")
 
     integrity_errors = [e for e in console_errors if "integrity" in e.lower()]
     assert integrity_errors == [], f"SRI integrity errors: {integrity_errors}"
+    assert page_errors == [], f"Uncaught page errors: {page_errors}"
 
-    # Chart.js draws onto the <canvas id="projectionChart"> via getContext('2d');
-    # if the script were blocked, `new Chart(...)` would never run and the
-    # canvas would never receive a rendering context.
-    has_rendering_context = page.evaluate(
-        "document.getElementById('projectionChart').getContext('2d') !== null"
-        " && typeof window.Chart !== 'undefined'"
+    chart_initialized = page.evaluate(
+        "() => typeof window.Chart !== 'undefined' && !!window.Chart.getChart("
+        "document.getElementById('projectionChart'))"
     )
-    assert has_rendering_context
+    assert chart_initialized

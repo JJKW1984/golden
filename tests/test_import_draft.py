@@ -226,6 +226,14 @@ def test_confirm_ignores_unknown_row_ids(import_ctx):
     assert 888 in summary["ignored_row_ids"]
 
 
+def test_confirm_ignores_non_numeric_edit_keys(import_ctx):
+    draft = _make_draft(import_ctx)
+    summary = confirm_import(import_ctx, draft.id, selected_row_ids=[0], edits={"": {"payee": "Ghost"}})
+    assert summary["imported_count"] == 1
+    txn = import_ctx.db.query(Transaction).filter_by(account_id=import_ctx.account_id).one()
+    assert txn.payee == "Coffee"
+
+
 def test_confirm_deletes_draft(import_ctx):
     draft = _make_draft(import_ctx)
     confirm_import(import_ctx, draft.id, selected_row_ids=[0], edits={})

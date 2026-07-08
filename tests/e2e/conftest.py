@@ -61,7 +61,11 @@ def live_server():
             s.close()
 
     def override_get_account_context():
-        return AccountContext(account_id=1, db=next(override_get_db()))
+        s = SessionLocal()
+        try:
+            yield AccountContext(account_id=1, db=s)
+        finally:
+            s.close()
 
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_account_context] = override_get_account_context
