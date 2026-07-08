@@ -12,7 +12,7 @@ Endpoints:
 - GET /settings/export: Export transactions as CSV
 - POST /settings/backup: Create database backup
 """
-from datetime import date, datetime
+from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, Depends, UploadFile, File, Form, Body, HTTPException
 from fastapi.responses import HTMLResponse, Response
@@ -24,7 +24,6 @@ from finapp.deps import get_account_context, AccountContext
 from finapp.services import settings as settings_svc
 from finapp.services import csv_import as csv_import_svc
 from finapp.services.export_csv import export_transactions_csv
-from finapp.services.ledger import create_transaction
 from finapp.services.backup import create_backup
 
 # Initialize templates
@@ -42,6 +41,21 @@ class SettingsUpdateRequest(BaseModel):
     hourly_wage_cents: Optional[int] = None
     pay_frequency: Optional[str] = None
     pay_day: Optional[int] = None
+
+
+class RowEdit(BaseModel):
+    """A single inline edit. Any subset of fields may be provided."""
+    date: Optional[str] = None
+    amount: Optional[str] = None   # display string, e.g. "45.00"
+    direction: Optional[str] = None
+    payee: Optional[str] = None
+
+
+class ConfirmImportRequest(BaseModel):
+    draft_id: int
+    selected_row_ids: list[int] = []
+    edits: dict[str, RowEdit] = {}
+    version: Optional[int] = None
 
 
 @router.get("/settings", response_class=HTMLResponse)
@@ -215,20 +229,12 @@ async def import_csv(
 
     Returns:
         {
-            "rows": [
-                {
-                    "row_index": int,
-                    "date": "YYYY-MM-DD",
-                    "amount_cents": int,
-                    "direction": "in"|"out",
-                    "payee": str,
-                    "import_hash": str,
-                    "is_duplicate": bool,
-                    "selected": bool
-                },
-                ...
-            ],
-            "duplicate_count": int
+            "draft_id": int,
+            "expires_at": "ISO-8601 timestamp",
+            "rows": [ ...normalized row dicts (row_id, date, amount_cents,
+                       direction, payee, import_hash, is_duplicate, selected,
+                       issues, valid)... ],
+            "summary": {"total", "valid", "invalid", "duplicate"}
         }
     """
     # Read file content
@@ -243,83 +249,67 @@ async def import_csv(
     if map_direction and map_direction.strip():
         column_map["direction"] = map_direction
 
-    # Save mapping
+    # Save mapping for next time
     settings_svc.save_csv_column_map(ctx, column_map)
 
-    # Parse CSV
+    # Parse + normalize + dedup
     rows = csv_import_svc.parse_csv(content)
-
-    # Build preview
     spent_neg = spent_is_negative.lower() in ("true", "1", "yes", "on")
-    preview = csv_import_svc.build_preview(ctx, rows, column_map, spent_is_negative=spent_neg)
+    preview = csv_import_svc.build_normalized_preview(
+        ctx, rows, column_map, spent_is_negative=spent_neg
+    )
 
-    # Convert preview to JSON-serializable format
-    preview_rows = []
-    duplicate_count = 0
-    for p in preview:
-        if p.is_duplicate:
-            duplicate_count += 1
-        preview_rows.append({
-            "row_index": p.row_index,
-            "date": p.date.isoformat(),
-            "amount_cents": p.amount_cents,
-            "direction": p.direction,
-            "payee": p.payee,
-            "import_hash": p.import_hash,
-            "is_duplicate": p.is_duplicate,
-            "selected": p.selected,
-        })
+    # Persist a draft and return it
+    draft = csv_import_svc.create_draft(ctx, column_map, spent_neg, preview)
 
     return {
-        "rows": preview_rows,
-        "duplicate_count": duplicate_count,
+        "draft_id": draft.id,
+        "expires_at": draft.expires_at.isoformat(),
+        "rows": preview,
+        "summary": csv_import_svc.summarize(preview),
     }
 
 
 @router.post("/settings/import/confirm")
 def confirm_import(
-    body: dict = Body(...),
+    body: ConfirmImportRequest,
     ctx: AccountContext = Depends(get_account_context),
 ) -> dict:
     """
-    Confirm and import CSV rows into the ledger.
+    Confirm a draft-backed import.
 
     Request body:
     {
-        "rows": [
-            {
-                "date": "2026-06-01",
-                "amount_cents": 4500,
-                "direction": "out",
-                "payee": "Coffee Shop"
-            },
-            ...
-        ]
+        "draft_id": 12,
+        "selected_row_ids": [0, 1, 3],
+        "edits": {"3": {"date": "2026-06-05", "amount": "12.50",
+                         "direction": "out", "payee": "Fixed"}},
+        "version": 1            # optional
     }
 
-    Returns:
-        {"imported": number_of_rows}
+    Returns the import summary:
+    {
+        "imported_count": int,
+        "skipped_duplicate_count": int,
+        "skipped_invalid_count": int,
+        "skipped_unselected_count": int,
+        "ignored_row_ids": [int, ...],
+        "errors": [{"row_id": int, "reason": "invalid"|"duplicate", ...}]
+    }
     """
-    rows = body.get("rows", [])
-    imported_count = 0
-
-    for row in rows:
-        txn_date = date.fromisoformat(row["date"])
-        amount_cents = row["amount_cents"]
-        direction = row["direction"]
-        payee = row.get("payee")
-
-        create_transaction(
-            ctx,
-            date=txn_date,
-            amount_cents=amount_cents,
-            direction=direction,
-            payee=payee,
-            is_imported=True,
+    edits = {k: v.model_dump(exclude_unset=True) for k, v in body.edits.items()}
+    try:
+        return csv_import_svc.confirm_import(
+            ctx, body.draft_id, body.selected_row_ids, edits
         )
-        imported_count += 1
-
-    return {"imported": imported_count}
+    except csv_import_svc.DraftNotFoundError:
+        raise HTTPException(status_code=404, detail={"code": "draft_not_found"})
+    except csv_import_svc.DraftExpiredError:
+        raise HTTPException(
+            status_code=410,
+            detail={"code": "draft_expired",
+                    "message": "Your import preview expired. Please re-upload the file."},
+        )
 
 
 @router.get("/api/needs-category")

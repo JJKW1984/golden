@@ -6,8 +6,11 @@
     <title>Welcome — Personal Finance App</title>
     <link rel="stylesheet" href="/static/theme.css" />
     <script src="/static/theme.js"></script>
-    <script src="https://cdn.tailwindcss.com" integrity="sha384-ZOxlONqYT8A/gUxhJkXJP2pC2wqaX4yWvC4u6hLZwl3MFjL2YqDvXfS4t2Rq4nNd" crossorigin="anonymous"></script>
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" integrity="sha384-nVDQlWJywQyB56zNON36OfWJM0l6w1wHfM2OqsNUC8kxpGR/VhknP0rhjKSmvAv4M" crossorigin="anonymous"></script>
+    <!-- No SRI on these two: Play CDN serves dynamic content with no CORS
+         headers, and Alpine's @3.x.x tag floats onto new patch releases —
+         neither has fixed content a hash can pin. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="min-h-screen" style="background-color: var(--bg-secondary); color: var(--text-primary);">
 <div class="max-w-xl mx-auto px-4 py-10" x-data="onboarding()">
@@ -25,35 +28,35 @@
     <p class="text-sm text-muted mb-6">Step <span x-text="step"></span> of 6</p>
 
     <!-- Step 1: Welcome -->
-    <section x-show="step === 1">
+    <section x-show="step === 1" data-testid="onboarding-step-1">
         <h1 class="text-2xl font-bold mb-2">Welcome</h1>
         <p class="text-muted mb-6">This app will help you rebuild — one day at a time.</p>
         <label class="block text-sm font-medium mb-2">What should we call you?</label>
-        <input x-model="form.user_name" type="text" class="w-full px-4 py-2 border rounded-lg mb-6" placeholder="Your name" />
-        <button @click="step = 2" class="btn btn-primary w-full">Get started</button>
+        <input x-model="form.user_name" type="text" data-testid="onboarding-name" class="w-full px-4 py-2 border rounded-lg mb-6" placeholder="Your name" />
+        <button @click="step = 2" data-testid="onboarding-get-started" class="btn btn-primary w-full">Get started</button>
     </section>
 
     <!-- Step 2: Income -->
-    <section x-show="step === 2">
+    <section x-show="step === 2" data-testid="onboarding-step-2">
         <h1 class="text-2xl font-bold mb-4">Income setup</h1>
         <label class="block text-sm font-medium mb-2">Monthly take-home (after tax)</label>
-        <input x-model="form.monthly_income" type="text" inputmode="decimal" class="w-full px-4 py-2 border rounded-lg mb-4" placeholder="0.00" />
+        <input x-model="form.monthly_income" type="text" inputmode="decimal" data-testid="onboarding-income" class="w-full px-4 py-2 border rounded-lg mb-4" placeholder="0.00" />
         <label class="block text-sm font-medium mb-2">Pay frequency</label>
-        <select x-model="form.pay_frequency" class="w-full px-4 py-2 border rounded-lg mb-4">
+        <select x-model="form.pay_frequency" data-testid="onboarding-pay-frequency" class="w-full px-4 py-2 border rounded-lg mb-4">
             <option value="monthly">Monthly</option>
             <option value="biweekly">Every two weeks</option>
             <option value="weekly">Weekly</option>
         </select>
         <label class="block text-sm font-medium mb-2">Pay day (day of month)</label>
-        <input x-model.number="form.pay_day" type="number" min="1" max="31" class="w-full px-4 py-2 border rounded-lg mb-6" />
+        <input x-model.number="form.pay_day" type="number" min="1" max="31" data-testid="onboarding-pay-day" class="w-full px-4 py-2 border rounded-lg mb-6" />
         <div class="flex gap-2">
             <button @click="step = 1" class="btn btn-secondary flex-1">Back</button>
-            <button @click="saveSettings()" class="btn btn-primary flex-1">Continue</button>
+            <button @click="saveSettings()" data-testid="onboarding-income-continue" class="btn btn-primary flex-1">Continue</button>
         </div>
     </section>
 
     <!-- Step 3: Categories -->
-    <section x-show="step === 3">
+    <section x-show="step === 3" data-testid="onboarding-step-3">
         <h1 class="text-2xl font-bold mb-2">Budget categories</h1>
         <p class="text-muted mb-6">We'll set dollar amounts next. For now, just confirm these buckets fit your life.</p>
         <div class="space-y-2 mb-4">
@@ -75,12 +78,12 @@
         <input id="cat-add" type="text" class="w-full px-4 py-2 border rounded-lg mb-6" placeholder="e.g. Pets" />
         <div class="flex gap-2">
             <button @click="step = 2" class="btn btn-secondary flex-1">Back</button>
-            <button @click="saveCategories()" class="btn btn-primary flex-1">Continue</button>
+            <button @click="saveCategories()" data-testid="onboarding-categories-continue" class="btn btn-primary flex-1">Continue</button>
         </div>
     </section>
 
     <!-- Step 4: Debt -->
-    <section x-show="step === 4">
+    <section x-show="step === 4" data-testid="onboarding-step-4">
         <h1 class="text-2xl font-bold mb-4">Debt</h1>
         <p class="text-muted mb-4">Do you have any debt you want to pay off?</p>
         <div class="flex gap-2 mb-4">
@@ -111,12 +114,12 @@
 
         <div class="flex gap-2">
             <button @click="step = 3" class="btn btn-secondary flex-1">Back</button>
-            <button @click="saveDebt()" class="btn btn-primary flex-1">Continue</button>
+            <button @click="saveDebt()" data-testid="onboarding-debt-continue" class="btn btn-primary flex-1">Continue</button>
         </div>
     </section>
 
     <!-- Step 5: Emergency fund -->
-    <section x-show="step === 5">
+    <section x-show="step === 5" data-testid="onboarding-step-5">
         <h1 class="text-2xl font-bold mb-4">Emergency fund</h1>
         <p class="text-muted mb-4">Do you have emergency savings?</p>
         <div class="flex gap-2 mb-4">
@@ -137,15 +140,15 @@
         <input x-model="form.target" type="text" inputmode="decimal" class="w-full px-4 py-2 border rounded-lg mb-6" placeholder="Custom target" />
         <div class="flex gap-2">
             <button @click="step = 4" class="btn btn-secondary flex-1">Back</button>
-            <button @click="saveSavings()" class="btn btn-primary flex-1">Continue</button>
+            <button @click="saveSavings()" data-testid="onboarding-savings-continue" class="btn btn-primary flex-1">Continue</button>
         </div>
     </section>
 
     <!-- Step 6: Mission queue -->
-    <section x-show="step === 6">
+    <section x-show="step === 6" data-testid="onboarding-step-6">
         <h1 class="text-2xl font-bold mb-2">Your mission queue</h1>
         <p class="text-muted mb-6">We've lined up your goals in a sensible order. You can reorder them anytime.</p>
-        <button @click="finish()" class="btn btn-primary w-full">Finish setup</button>
+        <button @click="finish()" data-testid="onboarding-finish" class="btn btn-primary w-full">Finish setup</button>
     </section>
 </div>
 

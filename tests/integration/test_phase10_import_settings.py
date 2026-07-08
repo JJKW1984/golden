@@ -160,13 +160,17 @@ def _upload(client, content=CSV_CONTENT):
     )
 
 
-def test_import_upload_returns_preview_and_remembers_mapping(client, ctx):
+def test_import_upload_returns_draft_and_remembers_mapping(client, ctx):
     resp = _upload(client)
     assert resp.status_code == 200
     body = resp.json()
-    rows = body["rows"]
-    assert len(rows) == 3
-    # Mapping persisted to Settings.csv_column_map
+    assert isinstance(body["draft_id"], int)
+    assert "expires_at" in body
+    assert len(body["rows"]) == 3
+    assert body["summary"]["total"] == 3
+    # Each row exposes the editable contract fields.
+    assert {"row_id", "date", "amount_cents", "direction", "payee",
+            "is_duplicate", "selected", "issues", "valid"} <= set(body["rows"][0])
     saved = settings_svc.get_csv_column_map(ctx)
     assert saved.get("date") == "Date"
     assert saved.get("amount") == "Amount"
@@ -188,28 +192,76 @@ def test_import_preview_flags_existing_duplicate(client, ctx):
 # Confirm: rows route through the ledger into correct periods; inbox + badge
 # ---------------------------------------------------------------------------
 
+def _confirm_all_valid(client):
+    """Upload, then confirm every row the preview marked selected."""
+    preview = _upload(client).json()
+    selected = [r["row_id"] for r in preview["rows"] if r["selected"]]
+    return client.post("/settings/import/confirm", json={
+        "draft_id": preview["draft_id"],
+        "selected_row_ids": selected,
+        "edits": {},
+    })
+
+
 def test_confirm_imports_into_correct_periods_and_inbox(client, ctx):
-    resp = client.post("/settings/import/confirm", json={"rows": [
-        {"date": "2026-06-01", "amount_cents": 4500, "direction": "out", "payee": "Coffee Shop"},
-        {"date": "2026-05-15", "amount_cents": 12000, "direction": "out", "payee": "Old Thing"},
-        {"date": "2026-06-02", "amount_cents": 150000, "direction": "in", "payee": "Paycheck"},
-    ]})
+    resp = _confirm_all_valid(client)
     assert resp.status_code == 200
-    assert resp.json()["imported"] == 3
+    assert resp.json()["imported_count"] == 3
 
     txns = ctx.db.query(Transaction).filter_by(account_id=ctx.account_id).all()
     assert len(txns) == 3
     assert all(t.is_imported for t in txns)
-    assert all(t.category_id is None for t in txns)  # uncategorized
-    # Periods derived from date
+    assert all(t.category_id is None for t in txns)
     by_payee = {t.payee: t for t in txns}
     assert (by_payee["Old Thing"].period.year, by_payee["Old Thing"].period.month) == (2026, 5)
     assert (by_payee["Coffee Shop"].period.year, by_payee["Coffee Shop"].period.month) == (2026, 6)
 
-    # Needs Category inbox + badge
     inbox = client.get("/api/needs-category")
     assert inbox.status_code == 200
     assert inbox.json()["count"] == 3
+
+
+def test_confirm_excludes_unselected_duplicate(client, ctx):
+    # Pre-existing imported txn duplicates the first CSV row.
+    create_transaction(ctx, date=date(2026, 6, 1), amount_cents=4500,
+                       direction="out", payee="Coffee Shop", is_imported=True)
+    preview = _upload(client).json()
+    # The duplicate row defaults to unselected; confirm the selected ones.
+    selected = [r["row_id"] for r in preview["rows"] if r["selected"]]
+    resp = client.post("/settings/import/confirm", json={
+        "draft_id": preview["draft_id"],
+        "selected_row_ids": selected,
+        "edits": {},
+    })
+    assert resp.json()["imported_count"] == 2  # Old Thing + Paycheck
+
+
+def test_confirm_inline_edit_flow(client, ctx):
+    preview = _upload(client).json()
+    coffee = next(r for r in preview["rows"] if r["payee"] == "Coffee Shop")
+    resp = client.post("/settings/import/confirm", json={
+        "draft_id": preview["draft_id"],
+        "selected_row_ids": [coffee["row_id"]],
+        "edits": {str(coffee["row_id"]): {"payee": "Cafe Edited", "amount": "50.00"}},
+    })
+    assert resp.json()["imported_count"] == 1
+    txn = ctx.db.query(Transaction).filter_by(payee="Cafe Edited").first()
+    assert txn is not None
+    assert txn.amount_cents == 5000
+
+
+def test_confirm_expired_draft_returns_410(client, ctx):
+    from finapp.models import ImportDraft
+    preview = _upload(client).json()
+    draft = ctx.db.query(ImportDraft).filter_by(id=preview["draft_id"]).first()
+    from datetime import datetime as _dt
+    draft.expires_at = _dt(2000, 1, 1)
+    ctx.db.commit()
+    resp = client.post("/settings/import/confirm", json={
+        "draft_id": preview["draft_id"], "selected_row_ids": [0], "edits": {},
+    })
+    assert resp.status_code == 410
+    assert resp.json()["detail"]["code"] == "draft_expired"
 
 
 # ---------------------------------------------------------------------------
@@ -234,13 +286,19 @@ def test_backup_creates_file(client, ctx):
 
 
 def test_reconciliation_green_after_mixed_duplicate_import(client, ctx):
-    # Pre-existing imported txn (a duplicate of the first confirm row).
     create_transaction(ctx, date=date(2026, 6, 1), amount_cents=4500,
                        direction="out", payee="Coffee Shop", is_imported=True)
-    # Confirm a mixed batch (the duplicate excluded by the user; new rows kept).
-    client.post("/settings/import/confirm", json={"rows": [
-        {"date": "2026-05-15", "amount_cents": 12000, "direction": "out", "payee": "Old Thing"},
-        {"date": "2026-06-02", "amount_cents": 150000, "direction": "in", "payee": "Paycheck"},
-    ]})
+    _confirm_all_valid(client)  # duplicate auto-excluded, new rows imported
     report = recompute_balances(ctx.db, ctx.account_id)
     assert report["total_drift"] == 0
+
+
+def test_settings_page_has_import_preview_ui(client):
+    resp = client.get("/settings")
+    assert resp.status_code == 200
+    html = resp.text
+    assert 'id="import-preview"' in html
+    assert 'id="import-result"' in html
+    assert "function previewImport" in html
+    assert "function confirmImport" in html
+    assert "selectAllValid" in html

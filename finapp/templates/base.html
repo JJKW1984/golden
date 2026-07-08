@@ -13,21 +13,23 @@
     <script src="/static/theme.js"></script>
 
     <!-- Tailwind CSS (Play CDN) -->
-    <script src="https://cdn.tailwindcss.com" integrity="sha384-ZOxlONqYT8A/gUxhJkXJP2pC2wqaX4yWvC4u6hLZwl3MFjL2YqDvXfS4t2Rq4nNd" crossorigin="anonymous"></script>
+    <!-- No SRI: the Play CDN serves dynamically generated CSS/JS with no fixed
+         content to hash, and doesn't emit the CORS headers SRI requires. -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.10"
-        integrity="sha384-D1Kt99CQMDuVeK5mXA0C5n9+fFplnTmHpSvHO1RJkCMw3f/DxmlJ8oPjGELHNWuLQ"
+        integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC"
         crossorigin="anonymous"></script>
 
     <!-- Alpine.js (optional, for UI toggles) -->
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"
-        integrity="sha384-nVDQlWJywQyB56zNON36OfWJM0l6w1wHfM2OqsNUC8kxpGR/VhknP0rhjKSmvAv4M"
-        crossorigin="anonymous"></script>
+    <!-- No SRI: pinned to the floating @3.x.x tag by design (picks up patch
+         releases), so its content changes upstream and can't be hash-pinned. -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     <!-- Chart.js (for debt/savings projections) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"
-        integrity="sha384-TN3Hv5OYYP5+bL1s6K4qYaZrQ3zGfGSVVaWatDh6f3nXj0Gh6bUvCNGYLQV/B3Vhm"
+        integrity="sha384-FcQlsUOd0TJjROrBxhJdUhXTUgNJQxTMcxZe6nHbaEfFL1zjQ+bq/uRoBQxb0KMo"
         crossorigin="anonymous"></script>
 
     <style>

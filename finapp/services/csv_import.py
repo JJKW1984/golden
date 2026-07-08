@@ -6,14 +6,18 @@ Uses the ledger's compute_import_hash for dedup so preview matches stored state.
 """
 import csv
 import io
+import json
 from dataclasses import dataclass
-from datetime import date, datetime
-from decimal import Decimal
+from datetime import date, datetime, timedelta
+from decimal import Decimal, InvalidOperation
 
 from finapp.deps import AccountContext
 from finapp.money import to_cents
-from finapp.models import Transaction
-from finapp.services.ledger import compute_import_hash
+from finapp.models import Transaction, ImportDraft
+from finapp.services.ledger import compute_import_hash, create_transaction
+
+
+_OUT_WORDS = {"debit", "withdrawal", "payment", "out", "expense", "w"}
 
 
 @dataclass
@@ -93,16 +97,11 @@ def build_preview(
         amount_cents = to_cents(abs(amount_decimal))
 
         # Determine direction
-        if "direction" in column_map:
-            direction_str = row.get(column_map["direction"], "").strip().lower()
-            _out_words = {"debit", "withdrawal", "payment", "out", "expense", "w"}
-            direction = "out" if direction_str in _out_words else "in"
-        else:
-            # Use sign of amount with toggle
-            if spent_is_negative:
-                direction = "out" if amount_decimal < 0 else "in"
-            else:
-                direction = "out" if amount_decimal > 0 else "in"
+        has_direction_col = "direction" in column_map
+        direction_raw = row.get(column_map.get("direction", ""), "") if has_direction_col else ""
+        direction = _resolve_direction(
+            amount_decimal, direction_raw, has_direction_col, spent_is_negative
+        )
 
         # Parse payee
         payee = row.get(column_map.get("payee", ""), "").strip()
@@ -166,6 +165,132 @@ def _parse_amount_to_decimal(amount_str: str) -> Decimal:
     return Decimal(cleaned)
 
 
+def _safe_parse_date(date_str: str):
+    """Like _parse_date but returns None instead of raising on bad input."""
+    if not date_str or not date_str.strip():
+        return None
+    try:
+        return _parse_date(date_str.strip())
+    except ValueError:
+        return None
+
+
+def _safe_parse_amount(amount_str: str):
+    """Like _parse_amount_to_decimal but returns None instead of raising."""
+    if amount_str is None or str(amount_str).strip() == "":
+        return None
+    try:
+        return _parse_amount_to_decimal(str(amount_str).strip())
+    except (InvalidOperation, ValueError):
+        return None
+
+
+def _resolve_direction(amount_decimal, direction_raw, has_direction_col, spent_is_negative):
+    """Resolve 'in'/'out'. With a direction column, classify by out-words;
+    otherwise use the amount's sign with the spent_is_negative toggle."""
+    if has_direction_col:
+        return "out" if (direction_raw or "").strip().lower() in _OUT_WORDS else "in"
+    value = amount_decimal if amount_decimal is not None else Decimal(0)
+    if spent_is_negative:
+        return "out" if value < 0 else "in"
+    return "out" if value > 0 else "in"
+
+
+def normalize_rows(
+    rows: list[dict], column_map: dict, spent_is_negative: bool = True
+) -> list[dict]:
+    """Normalize raw CSV rows into the shared normalized-row schema.
+
+    Records per-row parse problems in 'issues' instead of aborting the batch.
+    Does NOT touch the database; duplicate flags are applied later by
+    mark_duplicates(). amount_cents is always a non-negative magnitude.
+    """
+    has_direction_col = "direction" in column_map
+    normalized = []
+
+    for row_id, row in enumerate(rows):
+        issues = []
+
+        raw_date = row.get(column_map.get("date", ""), "") or ""
+        parsed_date = _safe_parse_date(raw_date)
+        if parsed_date is None:
+            issues.append("date")
+
+        raw_amount = row.get(column_map.get("amount", ""), "") or ""
+        amount_decimal = _safe_parse_amount(raw_amount)
+        if amount_decimal is None:
+            issues.append("amount")
+            amount_cents = 0
+        else:
+            amount_cents = to_cents(abs(amount_decimal))
+
+        direction_raw = row.get(column_map.get("direction", ""), "") if has_direction_col else ""
+        direction = _resolve_direction(
+            amount_decimal, direction_raw, has_direction_col, spent_is_negative
+        )
+
+        payee = (row.get(column_map.get("payee", ""), "") or "").strip()
+
+        valid = not issues
+        import_hash = (
+            compute_import_hash(parsed_date, amount_cents, payee) if valid else None
+        )
+
+        normalized.append({
+            "row_id": row_id,
+            "date": parsed_date.isoformat() if parsed_date else raw_date.strip(),
+            "amount_cents": amount_cents,
+            "direction": direction,
+            "payee": payee,
+            "import_hash": import_hash,
+            "is_duplicate": False,
+            "selected": valid,
+            "issues": issues,
+            "valid": valid,
+        })
+
+    return normalized
+
+
+def mark_duplicates(ctx: AccountContext, normalized: list[dict]) -> list[dict]:
+    """Set is_duplicate (DB hash match OR earlier-in-batch match) on valid rows
+    and clear their selection. Invalid rows are never duplicates."""
+    seen_hashes = set()
+    for r in normalized:
+        if not r["valid"]:
+            r["is_duplicate"] = False
+            continue
+        h = r["import_hash"]
+        db_dup = ctx.db.query(Transaction).filter_by(
+            account_id=ctx.account_id, import_hash=h
+        ).first() is not None
+        is_dup = db_dup or h in seen_hashes
+        seen_hashes.add(h)
+        r["is_duplicate"] = is_dup
+        if is_dup:
+            r["selected"] = False
+    return normalized
+
+
+def build_normalized_preview(
+    ctx: AccountContext, rows: list[dict], column_map: dict, spent_is_negative: bool = True
+) -> list[dict]:
+    """Normalize raw rows then apply duplicate detection. Returns the normalized
+    rows ready to persist in a draft and return to the browser."""
+    normalized = normalize_rows(rows, column_map, spent_is_negative)
+    return mark_duplicates(ctx, normalized)
+
+
+def summarize(rows: list[dict]) -> dict:
+    """Summary counts for a normalized preview. 'valid' = importable
+    (parsed OK and not a duplicate)."""
+    total = len(rows)
+    invalid = sum(1 for r in rows if not r["valid"])
+    duplicate = sum(1 for r in rows if r["is_duplicate"])
+    importable = sum(1 for r in rows if r["valid"] and not r["is_duplicate"])
+    return {"total": total, "valid": importable, "invalid": invalid, "duplicate": duplicate}
+
+
 def list_needs_category(ctx: AccountContext):
     """
     Return non-deleted transactions for ctx.account_id with category_id IS NULL,
@@ -187,3 +312,169 @@ def needs_category_count(ctx: AccountContext) -> int:
         is_deleted=False,
         category_id=None
     ).count()
+
+
+DRAFT_TTL_SECONDS = 3600
+
+
+class DraftNotFoundError(Exception):
+    """Raised when a draft id does not exist for this account."""
+
+
+class DraftExpiredError(Exception):
+    """Raised when a draft exists but has passed its expires_at."""
+
+
+def _utcnow_naive() -> datetime:
+    """Naive UTC timestamp. SQLite stores DateTime without tzinfo, so we keep
+    draft timestamps naive to compare them safely."""
+    return datetime.utcnow()
+
+
+def create_draft(ctx: AccountContext, column_map: dict, spent_is_negative: bool,
+                 rows: list[dict]) -> ImportDraft:
+    """Persist a normalized preview as a draft scoped to ctx.account_id."""
+    now = _utcnow_naive()
+    draft = ImportDraft(
+        account_id=ctx.account_id,
+        created_at=now,
+        expires_at=now + timedelta(seconds=DRAFT_TTL_SECONDS),
+        column_map_json=json.dumps(column_map),
+        spent_is_negative=spent_is_negative,
+        rows_json=json.dumps(rows),
+        version=1,
+    )
+    ctx.db.add(draft)
+    ctx.db.commit()
+    return draft
+
+
+def load_draft(ctx: AccountContext, draft_id: int) -> ImportDraft:
+    """Load a draft by account + id. Raises DraftNotFoundError or
+    DraftExpiredError."""
+    draft = ctx.db.query(ImportDraft).filter_by(
+        id=draft_id, account_id=ctx.account_id
+    ).first()
+    if draft is None:
+        raise DraftNotFoundError(draft_id)
+    if _utcnow_naive() > draft.expires_at:
+        raise DraftExpiredError(draft_id)
+    return draft
+
+
+def _apply_edit(row: dict, edit: dict) -> dict:
+    """Return a new normalized row with edit fields applied and issues +
+    import_hash recomputed. edit may carry date (str), amount (display string),
+    direction ('in'/'out'), payee (str). Missing keys keep the existing value."""
+    new = dict(row)
+
+    date_str = edit.get("date", row["date"])
+    payee = edit.get("payee", row["payee"]) or ""
+    direction = edit.get("direction", row["direction"])
+
+    if "amount" in edit and edit["amount"] is not None:
+        amount_decimal = _safe_parse_amount(str(edit["amount"]))
+        amount_cents = to_cents(abs(amount_decimal)) if amount_decimal is not None else None
+    else:
+        amount_cents = row["amount_cents"]
+
+    issues = []
+    parsed_date = _safe_parse_date(date_str) if date_str else None
+    if parsed_date is None:
+        issues.append("date")
+    if amount_cents is None:
+        issues.append("amount")
+    if direction not in ("in", "out"):
+        issues.append("direction")
+
+    valid = not issues
+    new["date"] = parsed_date.isoformat() if parsed_date else date_str
+    new["amount_cents"] = amount_cents if amount_cents is not None else 0
+    new["direction"] = direction
+    new["payee"] = payee
+    new["issues"] = issues
+    new["valid"] = valid
+    new["import_hash"] = (
+        compute_import_hash(parsed_date, new["amount_cents"], payee) if valid else None
+    )
+    return new
+
+
+def confirm_import(ctx: AccountContext, draft_id: int,
+                   selected_row_ids: list[int], edits: dict) -> dict:
+    """Apply edits, revalidate, re-check dedup against current DB state, import
+    selected valid non-duplicate rows through the ledger, and return a
+    partial-success summary. Deletes the draft on completion."""
+    draft = load_draft(ctx, draft_id)
+    rows = json.loads(draft.rows_json)
+    by_id = {r["row_id"]: r for r in rows}
+
+    ignored_row_ids = []
+
+    # Apply edits (unknown row ids are ignored + reported).
+    for key, edit in (edits or {}).items():
+        try:
+            rid = int(key)
+        except (TypeError, ValueError):
+            continue
+        if rid not in by_id:
+            ignored_row_ids.append(rid)
+            continue
+        by_id[rid] = _apply_edit(by_id[rid], edit)
+
+    # Resolve selection (unknown ids ignored + reported).
+    selected = set()
+    for rid in (selected_row_ids or []):
+        if rid in by_id:
+            selected.add(rid)
+        else:
+            ignored_row_ids.append(rid)
+
+    imported = duplicate = invalid = unselected = 0
+    errors = []
+    seen_hashes = set()  # intra-confirm dedup
+
+    for rid, r in by_id.items():
+        if rid not in selected:
+            unselected += 1
+            continue
+        if not r["valid"]:
+            invalid += 1
+            errors.append({"row_id": rid, "reason": "invalid", "issues": r["issues"]})
+            continue
+
+        # Recompute the hash authoritatively from current row fields so confirm
+        # dedup never relies on a possibly-stale stored value.
+        h = compute_import_hash(
+            date.fromisoformat(r["date"]), r["amount_cents"], r["payee"] or ""
+        )
+        db_dup = ctx.db.query(Transaction).filter_by(
+            account_id=ctx.account_id, import_hash=h
+        ).first() is not None
+        if db_dup or h in seen_hashes:
+            duplicate += 1
+            errors.append({"row_id": rid, "reason": "duplicate"})
+            continue
+        seen_hashes.add(h)
+
+        create_transaction(
+            ctx,
+            date=date.fromisoformat(r["date"]),
+            amount_cents=r["amount_cents"],
+            direction=r["direction"],
+            payee=r["payee"] or None,
+            is_imported=True,
+        )
+        imported += 1
+
+    ctx.db.delete(draft)
+    ctx.db.commit()
+
+    return {
+        "imported_count": imported,
+        "skipped_duplicate_count": duplicate,
+        "skipped_invalid_count": invalid,
+        "skipped_unselected_count": unselected,
+        "ignored_row_ids": ignored_row_ids,
+        "errors": errors,
+    }

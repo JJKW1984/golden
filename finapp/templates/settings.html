@@ -94,25 +94,25 @@
     <!-- CSV Import -->
     <section class="surface p-6">
         <h2 class="text-lg font-semibold mb-4">Import from CSV</h2>
-        <form action="/settings/import/csv" method="post" enctype="multipart/form-data" class="space-y-4">
+        <form id="import-form" onsubmit="event.preventDefault(); previewImport();" enctype="multipart/form-data" class="space-y-4">
             <div>
                 <label class="block text-sm font-medium form-label mb-1">CSV file</label>
-                <input type="file" name="file" accept=".csv" required class="w-full text-sm form-label" />
+                <input type="file" name="file" accept=".csv" required data-testid="csv-file" class="w-full text-sm form-label" />
             </div>
             <div class="grid grid-cols-3 gap-3">
                 <div>
                     <label class="block text-xs font-medium form-label mb-1">Date column</label>
-                    <input name="map_date" value="{{ csv_column_map.get('date', '') }}" placeholder="Date"
+                    <input name="map_date" value="{{ csv_column_map.get('date', '') }}" data-testid="csv-map-date" placeholder="Date"
                         class="w-full px-3 py-2 form-input rounded-lg" />
                 </div>
                 <div>
                     <label class="block text-xs font-medium form-label mb-1">Amount column</label>
-                    <input name="map_amount" value="{{ csv_column_map.get('amount', '') }}" placeholder="Amount"
+                    <input name="map_amount" value="{{ csv_column_map.get('amount', '') }}" data-testid="csv-map-amount" placeholder="Amount"
                         class="w-full px-3 py-2 form-input rounded-lg" />
                 </div>
                 <div>
                     <label class="block text-xs font-medium form-label mb-1">Payee column</label>
-                    <input name="map_payee" value="{{ csv_column_map.get('payee', '') }}" placeholder="Description"
+                    <input name="map_payee" value="{{ csv_column_map.get('payee', '') }}" data-testid="csv-map-payee" placeholder="Description"
                         class="w-full px-3 py-2 form-input rounded-lg" />
                 </div>
             </div>
@@ -123,8 +123,34 @@
                     <option value="false">Positive amounts are money out</option>
                 </select>
             </div>
-            <button type="submit" class="btn-add-transaction">Preview import</button>
+            <button type="submit" data-testid="csv-preview-submit" class="btn-add-transaction">Preview import</button>
+            <p id="import-error" class="text-sm mt-2" style="color: var(--amber, #F59E0B);"></p>
         </form>
+        <div id="import-preview" class="mt-6 hidden">
+            <div class="flex flex-wrap items-center gap-3 mb-3">
+                <span id="import-summary" class="text-sm text-muted"></span>
+                <button type="button" onclick="selectAllValid()" class="text-sm underline">Select all valid</button>
+                <button type="button" onclick="unselectAll()" class="text-sm underline">Unselect all</button>
+                <button type="button" onclick="resetEdits()" class="text-sm underline">Reset edits</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-left text-muted">
+                            <th class="py-1 pr-2"></th>
+                            <th class="py-1 pr-2">Date</th>
+                            <th class="py-1 pr-2">Amount</th>
+                            <th class="py-1 pr-2">Direction</th>
+                            <th class="py-1 pr-2">Payee</th>
+                            <th class="py-1 pr-2">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="import-rows"></tbody>
+                </table>
+            </div>
+            <button type="button" onclick="confirmImport()" class="btn-add-transaction mt-4">Confirm import</button>
+        </div>
+        <p id="import-result" class="text-sm mt-3"></p>
         <p class="text-xs text-muted mt-3">Duplicates already in your records are detected and skipped by default.
         </p>
     </section>
@@ -183,6 +209,144 @@
         } catch (e) {
             status.textContent = 'Could not create backup.';
         }
+    }
+
+    let importDraft = null;     // {draft_id, expires_at, rows, summary}
+    let importOriginal = {};    // row_id -> original {date, amount, direction, payee}
+
+    function _dollars(cents) { return (cents / 100).toFixed(2); }
+
+    // HTML-escape any server/CSV-derived value before interpolating into markup.
+    function _esc(s) {
+        return String(s).replace(/[&<>"']/g, c => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[c]));
+    }
+
+    async function previewImport() {
+        const form = document.getElementById('import-form');
+        const errEl = document.getElementById('import-error');
+        const resultEl = document.getElementById('import-result');
+        errEl.textContent = '';
+        resultEl.textContent = '';
+        const fd = new FormData();
+        fd.append('file', form.file.files[0]);
+        fd.append('map_date', form.map_date.value);
+        fd.append('map_amount', form.map_amount.value);
+        fd.append('map_payee', form.map_payee.value);
+        fd.append('spent_is_negative', form.spent_is_negative.value);
+        try {
+            const resp = await fetch('/settings/import/csv', { method: 'POST', body: fd });
+            if (!resp.ok) { errEl.textContent = 'Could not read that file. Check your column names.'; return; }
+            const data = await resp.json();
+            importDraft = data;
+            renderPreview(data);
+        } catch (e) {
+            errEl.textContent = 'Could not upload the file.';
+        }
+    }
+
+    function renderPreview(data) {
+        importOriginal = {};
+        const tbody = document.getElementById('import-rows');
+        tbody.innerHTML = '';
+        for (const r of data.rows) {
+            importOriginal[r.row_id] = {
+                date: r.date, amount: _dollars(r.amount_cents),
+                direction: r.direction, payee: r.payee,
+            };
+            const status = !r.valid ? 'Invalid' : (r.is_duplicate ? 'Duplicate' : 'Valid');
+            const tr = document.createElement('tr');
+            tr.dataset.rowId = r.row_id;
+            tr.innerHTML = `
+                <td class="py-1 pr-2"><input type="checkbox" class="row-select" ${r.selected ? 'checked' : ''}></td>
+                <td class="py-1 pr-2"><input class="row-date form-input px-2 py-1 rounded" value="${_esc(r.date)}"></td>
+                <td class="py-1 pr-2"><input class="row-amount form-input px-2 py-1 rounded w-24" value="${_dollars(r.amount_cents)}"></td>
+                <td class="py-1 pr-2">
+                    <select class="row-direction form-input px-2 py-1 rounded">
+                        <option value="out" ${r.direction === 'out' ? 'selected' : ''}>out</option>
+                        <option value="in" ${r.direction === 'in' ? 'selected' : ''}>in</option>
+                    </select>
+                </td>
+                <td class="py-1 pr-2"><input class="row-payee form-input px-2 py-1 rounded" value="${_esc(r.payee)}"></td>
+                <td class="py-1 pr-2 text-muted">${status}</td>`;
+            tbody.appendChild(tr);
+        }
+        const s = data.summary;
+        document.getElementById('import-summary').textContent =
+            `${s.total} rows · ${s.valid} ready · ${s.duplicate} duplicate · ${s.invalid} invalid`;
+        document.getElementById('import-preview').classList.remove('hidden');
+    }
+
+    function _eachRow(fn) {
+        document.querySelectorAll('#import-rows tr').forEach(fn);
+    }
+
+    function selectAllValid() {
+        const valid = new Set(
+            importDraft.rows.filter(r => r.valid && !r.is_duplicate).map(r => r.row_id)
+        );
+        _eachRow(tr => {
+            tr.querySelector('.row-select').checked = valid.has(parseInt(tr.dataset.rowId, 10));
+        });
+    }
+
+    function unselectAll() {
+        _eachRow(tr => { tr.querySelector('.row-select').checked = false; });
+    }
+
+    function resetEdits() {
+        _eachRow(tr => {
+            const orig = importOriginal[parseInt(tr.dataset.rowId, 10)];
+            tr.querySelector('.row-date').value = orig.date;
+            tr.querySelector('.row-amount').value = orig.amount;
+            tr.querySelector('.row-direction').value = orig.direction;
+            tr.querySelector('.row-payee').value = orig.payee;
+        });
+    }
+
+    async function confirmImport() {
+        if (!importDraft) return;
+        const resultEl = document.getElementById('import-result');
+        const selected = [];
+        const edits = {};
+        _eachRow(tr => {
+            const id = parseInt(tr.dataset.rowId, 10);
+            if (tr.querySelector('.row-select').checked) selected.push(id);
+            const cur = {
+                date: tr.querySelector('.row-date').value,
+                amount: tr.querySelector('.row-amount').value,
+                direction: tr.querySelector('.row-direction').value,
+                payee: tr.querySelector('.row-payee').value,
+            };
+            const orig = importOriginal[id];
+            const changed = {};
+            for (const k of ['date', 'amount', 'direction', 'payee']) {
+                if (cur[k] !== orig[k]) changed[k] = cur[k];
+            }
+            if (Object.keys(changed).length) edits[id] = changed;
+        });
+
+        const resp = await fetch('/settings/import/confirm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ draft_id: importDraft.draft_id, selected_row_ids: selected, edits }),
+        });
+
+        if (resp.status === 410) {
+            resultEl.textContent = 'Your preview expired — please upload the file again.';
+            document.getElementById('import-preview').classList.add('hidden');
+            importDraft = null;
+            return;
+        }
+        if (!resp.ok) { resultEl.textContent = 'Import could not be completed.'; return; }
+
+        const r = await resp.json();
+        resultEl.textContent =
+            `Imported ${r.imported_count} · skipped ${r.skipped_duplicate_count} duplicate, ` +
+            `${r.skipped_invalid_count} invalid, ${r.skipped_unselected_count} unselected.`;
+        document.getElementById('import-preview').classList.add('hidden');
+        importDraft = null;
     }
 </script>
 {% endblock %}
