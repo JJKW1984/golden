@@ -1,0 +1,29 @@
+tests/e2e/test_cdn_integrity_e2e.py
+  s_9b9bcbe92992bc::t_728add1e178e65 1-18
+finapp/templates/base.html
+  s_a532e65e04e867::t_c9fb5bbb460f00 22,32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "717695858f7d2ec598e01ba1dbccb070fc6bfe54",
+  "prompts": {},
+  "sessions": {
+    "s_9b9bcbe92992bc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b2dfc452-5dea-494c-8116-3579b5004e7a",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    },
+    "s_a532e65e04e867": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a9d45595101220c05",
+        "model": "unknown"
+      },
+      "human_author": "JJKW1984 <joseph.workman@gmail.com>"
+    }
+  }
+}
